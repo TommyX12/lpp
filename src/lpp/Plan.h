@@ -31,10 +31,10 @@ namespace LPP
         Q_PROPERTY(QString note READ note WRITE setNote NOTIFY noteChanged)
         Q_PROPERTY(Folder* parentFolder READ parentFolder NOTIFY parentFolderChanged)
         
-        Q_PROPERTY(QObjectVector* objectives READ objectives)
+        Q_PROPERTY(QObjectVector* objectives READ objectives NOTIFY objectivesChanged)
         Q_PROPERTY(Int completionMode READ completionMode WRITE setCompletionMode NOTIFY completionModeChanged)
             //0: ALL, 1: ANY
-        Q_PROPERTY(QObjectVector* instances READ instances)
+        Q_PROPERTY(QObjectVector* instances READ instances NOTIFY instancesChanged)
         
     public:
         
@@ -94,6 +94,9 @@ namespace LPP
         void parentFolderChanged();
         
         void typeChanged();
+        
+        void objectivesChanged();
+        void instancesChanged();
     };
 }
 

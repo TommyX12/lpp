@@ -15,6 +15,7 @@ Item {
     property real progress: 0
     property real progressNow: 0
     property int index: 0;
+    property var list: null;
     
     function refresh(){
         progressTxt.text = (objective == null) ? "" : "[ " + 
@@ -53,6 +54,7 @@ Item {
                 if (object == null) return "#000000"
                 else if (progress < 1.0) return "#eebb55"
                 else if (progressNow == 1.0) return "#44cc44"
+                else if (progressNow > 0.0) return "#5588ff"
                 else return "#cccccc"
             }
             
@@ -90,7 +92,10 @@ Item {
         text: ""
         
         onClicked: {
-            root.occurrenceWindow.show(object);
+            mainWindow.showModuleDirect(root.missionsModule);                        
+            root.missionsModule.selector.select(objective.action);
+            
+            root.occurrenceWindow.close();
         }
     }
     

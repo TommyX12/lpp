@@ -127,4 +127,7 @@ DISTFILES += \
     ../bin/qml/modules/lpp_timeline/components/DoubleProgressBar.qml \
     ../bin/qml/modules/lpp_timeline/components/OccurrenceWindow.qml \
     ../bin/qml/modules/lpp_missions/components/editors/InstanceWindow.qml \
-    ../bin/qml/modules/lpp_timeline/components/ObjectiveItem.qml
+    ../bin/qml/modules/lpp_timeline/components/ObjectiveItem.qml \
+    ../bin/qml/modules/lpp_missions/components/editors/AttachedPlanItem.qml \
+    ../bin/qml/modules/lpp_missions/components/editors/AttachedPlanWindow.qml \
+    ../bin/qml/modules/lpp_missions/components/editors/RepeatSelector.qml

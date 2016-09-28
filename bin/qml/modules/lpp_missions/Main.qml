@@ -18,12 +18,18 @@ Item {
     
     property alias selector: selector;
     property alias content: content;
+    property alias finder: finder
     
     Component.onCompleted: {
         
     }
     
     signal enter();
+    
+    Finder {
+        id: finder
+        
+    }
     
     RowLayout {
         id: rowLayout1

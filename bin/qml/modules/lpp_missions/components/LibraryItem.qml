@@ -49,7 +49,7 @@ RowLayout {
             //borderColor = Qt.binding(function(){return selector.currentFolder.color;});
             //console.log(Engine.rootFolder.color);
         }
-        text: currentItem.name;
+        text: currentItem.name.length == 0 ? qsTr("(unnamed)") : currentItem.name;
         buttonColor: normalColor
         clip: true
         onClicked: {

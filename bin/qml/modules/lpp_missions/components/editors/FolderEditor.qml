@@ -37,6 +37,11 @@ Item {
     function save() {
         name.text = name.text.trim();
         
+        if (name.text.length == 0){
+            mainWindow.showError(qsTr("Error"), qsTr("Name cannot be empty."));
+            return;
+        }
+        
         var i, item;
         for (i = 0; i < currentItem.parentFolder.folders.size; i++){
             item = currentItem.parentFolder.folders.at(i);

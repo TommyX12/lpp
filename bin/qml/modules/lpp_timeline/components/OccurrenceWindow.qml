@@ -53,10 +53,11 @@ ApplicationWindow {
     
     function getStatusTxt(){
         if (occurrence == null) return ""
-        else if (occurrence.impossible) return occurrence.endTime <= Engine.currentTime() ? qsTr("Failed") : qsTr("Impossible under current schedules")
-        else if (occurrence.progress < 1.0) return qsTr("Insufficient planning")
+        else if (occurrence.impossible) return occurrence.endTime <= Engine.currentTime() ? qsTr("Failed") : qsTr("Impossible under Current Schedules")
+        else if (occurrence.progress < 1.0) return qsTr("Insufficient Planning")
         else if (occurrence.progressNow == 1.0) return qsTr("Completed")
-        else return qsTr("Fully planned")
+        else if (occurrence.progressNow > 0.0) return qsTr("In Progress")
+        else return qsTr("Fully Planned")
     }
     
     function getStatusColor(){
@@ -64,6 +65,7 @@ ApplicationWindow {
         else if (occurrence.impossible) return "#ff0000"
         else if (occurrence.progress < 1.0) return "#ee9922"
         else if (occurrence.progressNow == 1.0) return "#44bb44"
+        else if (occurrence.progressNow > 0.0) return "#5588ff"
         else return "#666666"
     }
     
@@ -111,7 +113,7 @@ ApplicationWindow {
                 
                 Label {
                     Layout.fillWidth: true
-                    text: occurrence == null ? "" : occurrence.plan.name
+                    text: occurrence == null ? "" : (occurrence.plan.name.length == 0 ? qsTr("(unnamed)") : occurrence.plan.name)
                 }
                 
                 Label {
@@ -123,6 +125,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     text: {
                         if (occurrence == null) return "";
+                        if (occurrence.plan.parentFolder == null) return qsTr("(attached mission)");
                         var note = occurrence.plan.note;
                         if (note.length == 0) return qsTr("(none)");
                         note = note.split("\n");
@@ -204,8 +207,9 @@ ApplicationWindow {
                 height: 30
                 text: qsTr("Find Mission in Library")
                 onClicked: {
-                    mainWindow.showModuleDirect(root.missionsModule);                        
-                    root.missionsModule.selector.select(occurrence.plan);
+                    mainWindow.showModuleDirect(root.missionsModule);
+                    if (occurrence.plan.parentFolder == null) root.missionsModule.selector.select(occurrence.plan.objectives.at(0).action);
+                    else root.missionsModule.selector.select(occurrence.plan);
                     
                     window.close();
                 }
@@ -218,7 +222,7 @@ ApplicationWindow {
                 height: 30
                 text: qsTr("Go to Occurrence on Timeline")
                 onClicked: {
-                    root.timeline.setCamera(occurrence.startTime.getTime(), root.timeline.cameraZoomDest);
+                    root.timeline.setCamera(occurrence.startTime.getTime(), root.timeline.cameraZoom);
                     
                     window.close();
                 }

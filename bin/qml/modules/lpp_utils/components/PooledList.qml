@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.1
 import "utils/Utils.js" as Utils
 
 Item {
+    id: list
     
     property var objItemPool: []
     
@@ -18,6 +19,8 @@ Item {
     
     property real spacing: 5;
     property real sideSpacing: 5
+    
+    signal itemTriggered(var object, int index, var data);
     
     function clear(){
         objList = [];
@@ -56,6 +59,7 @@ Item {
             objItem.y = i * (objItemHeight + spacing);
             objItem.object = objList[i];
             objItem.index = i;
+            objItem.list = list;
             
             objItem.refresh();
             

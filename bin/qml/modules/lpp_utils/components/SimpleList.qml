@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.1
 import "utils/Utils.js" as Utils
 
 Item {
-    
+    id: list
     
     property Component objItemComponent: null
     
@@ -19,6 +19,8 @@ Item {
     property int numObjects: 0
     
     property alias objItemScroll: objItemScroll
+    
+    signal itemTriggered(var object, int index, var data);
     
     function clear(){
         var i = 0;
@@ -46,6 +48,7 @@ Item {
         objItem.visible = objItem.enabled = true;
         objItem.object = object;
         objItem.index = numObjects;
+        objItem.list = list
             
         numObjects++;
     }

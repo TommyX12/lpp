@@ -66,7 +66,7 @@ RowLayout {
     SimpleButton {
         visible: instance != null
         height: button.height
-        width: 70
+        width: 50
         text: qsTr("Delete");
         onClicked: {
             deleteFunc(instance);

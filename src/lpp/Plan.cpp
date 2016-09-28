@@ -15,7 +15,7 @@ namespace LPP
     {
         
         this->m_id = -1;
-        this->m_name = "--";
+        this->m_name = "";
         this->m_note = "";
         this->m_completionMode = 0;
         this->updateFullPath();
@@ -202,8 +202,9 @@ namespace LPP
         Instance* newObject = new Instance();
         QQmlEngine::setObjectOwnership(newObject, QQmlEngine::CppOwnership);
         newObject->setPlan(this);
-        newObject->setStartTime(Engine::current()->currentTime());
-        newObject->setEndTime(Engine::current()->currentTime().addSecs(3600));
+        QDateTime current = Engine::current()->limitTimePrecision(Engine::current()->currentTime());
+        newObject->setStartTime(current);
+        newObject->setEndTime(current.addSecs(3600));
         this->m_instances.push(newObject);
         
         

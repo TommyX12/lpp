@@ -75,13 +75,8 @@ ColumnLayout {
         id: dialog_newPlan
     }
     
-    Finder {
-        id: finder
-        
-    }
-    
     function showFinder(){
-        finder.show(true, true, true, select);
+        root.finder.show(true, true, true, select);
     }
     
     function select(item){

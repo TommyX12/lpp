@@ -99,14 +99,14 @@ namespace LPP
     {
         Engine::current()->setOccurrencesChanged();
         
-        this->m_repeatUntil = repeatUntil;
+        this->m_repeatUntil = repeatUntil.toUTC();
         emit this->repeatUntilChanged();
         return this->m_repeatUntil;
     }
     
     bool Instance::isForever()
     {
-        return this->m_repeatUntil < this->m_endTime;
+        return this->m_repeatUntil < this->m_startTime;
     }
     
     QString Instance::getParams()

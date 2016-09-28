@@ -1,5 +1,8 @@
 #include "Action.h"
 #include "Session.h"
+#include "Plan.h"
+
+#include <QQmlEngine>
 
 
 #include "GlobalVars.h"
@@ -13,7 +16,7 @@ namespace LPP
     {
         
         this->m_id = -1;
-        this->m_name = "--";
+        this->m_name = "";
         this->m_note = "";
         this->updateFullPath();
     }
@@ -94,10 +97,60 @@ namespace LPP
         return this->m_note;
     }
     
+    bool Action::comparePlans(QObject* a, QObject* b)
+    {
+        return static_cast<Instance*>(static_cast<Plan*>(a)->instances()->at(0))->startTime() < static_cast<Instance*>(static_cast<Plan*>(b)->instances()->at(0))->startTime();
+    }
+    
+    QObjectVector* Action::plans()
+    {
+        return &this->m_plans;
+    }
+    
+    QObject* Action::createPlan()
+    {
+        Engine::current()->setOccurrencesChanged();
+        
+        Plan* newPlan = new Plan();
+        
+        QQmlEngine::setObjectOwnership(newPlan, QQmlEngine::CppOwnership);
+        
+        this->plans()->push(newPlan);
+        
+        newPlan->createInstance();
+        newPlan->createObjective(this);
+        
+        return newPlan;
+    }
+    
+    bool Action::deletePlan(QObject* plan)
+    {   
+        if (plan != nullptr){
+            
+            Engine::current()->setOccurrencesChanged();
+            
+            this->plans()->remove(plan);
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
     void Action::setParam(const QString& name, const QString& value)
     {
         if (name == "name") this->setName(value);
         else if (name == "note") this->setNote(value);
+        else if (name == "missions") {
+            QStringList params = value.split('\n', QString::KeepEmptyParts);
+            for (int i = 2; i < params.size(); i += 3){
+                Plan* plan = static_cast<Plan*>(this->createPlan());
+                QString name = params[i-2];
+                plan->name() = name.right(name.length() - 1);
+                static_cast<Objective*>(plan->objectives()->at(0))->setParams(params[i-1]);
+                static_cast<Instance*>(plan->instances()->at(0))->setParams(params[i]);
+            }
+        }
     }
 
     QVector<QPair<QString, QString>> Action::getParams()
@@ -105,6 +158,17 @@ namespace LPP
         QVector<QPair<QString, QString>> params;
         params.append(QPair<QString, QString>("name", this->name()));
         params.append(QPair<QString, QString>("note", this->note()));
+        
+        QString plansStr;
+        
+        for (int i = 0; i < this->plans()->size(); ++i){
+            Plan* plan = static_cast<Plan*>(this->plans()->at(i));
+            plansStr.append(">" + plan->name() + "\n");
+            plansStr.append(static_cast<Objective*>(plan->objectives()->at(0))->getParams() + "\n");
+            plansStr.append(static_cast<Instance*>(plan->instances()->at(0))->getParams() + "\n");
+        }
+        
+        params.append(QPair<QString, QString>("missions", plansStr));
         
         return params;
     }

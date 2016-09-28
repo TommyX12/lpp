@@ -373,6 +373,8 @@ namespace LPP
     {
         if (action == nullptr) return;
         
+        std::sort(action->plans()->getData().begin(), action->plans()->getData().end(), Action::comparePlans);
+        
         this->saveToFile(this->getFilePath(*action), action->getFileName() + e_saveFileNameExtension, *action);
     }
     
@@ -1522,7 +1524,7 @@ namespace LPP
     {
         if (this->m_occurrencesChanged){
             //updateOccurrences
-            this->extractOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, false);
+            this->extractAllOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, false);
             
             this->checkConditions(this->m_occurrences);
             
@@ -1531,7 +1533,7 @@ namespace LPP
             this->m_occurrencesChanged = false;
         }
         else if (this->m_timeChanged){
-            this->extractOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, true);
+            this->extractAllOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, true);
             
             this->checkConditions(this->m_occurrences);
             
@@ -1557,7 +1559,7 @@ namespace LPP
         return &this->m_occurrences;
     }
     
-    void Engine::extractOccurrences(QDateTime begin, QDateTime end, QObjectVector& output, bool pushPopOnly)
+    void Engine::extractAllOccurrences(QDateTime begin, QDateTime end, QObjectVector& output, bool pushPopOnly)
     {
         if (!output.size()) pushPopOnly = false;
         //regenerate list
@@ -1568,6 +1570,7 @@ namespace LPP
         end = limitTimePrecision(end);
         
         Int64 beginMSec = begin.toMSecsSinceEpoch();
+        /*
         QDate beginDate = begin.date();
         //Int beginMonth = this->toMonthNumber(beginDate);
         QTime beginTime = begin.time();
@@ -1576,6 +1579,7 @@ namespace LPP
         QDate endDate = end.date();
         //Int endMonth = this->toMonthNumber(endDate);
         QTime endTime = end.time();
+        */
         
         QDateTime oldEnd;
         if (pushPopOnly) {
@@ -1592,116 +1596,101 @@ namespace LPP
         }
         
         for (Plan* plan:this->m_plans){
-            if (plan != nullptr){
+            this->extractOccurrence(plan, begin, beginMSec, end, output, pushPopOnly, oldEnd);
+        }
+        
+        for (Action* action:this->m_actions){
+            if (action != nullptr){
+                for (QObject* object:action->plans()->getData()){
+                    Plan* plan = static_cast<Plan*>(object);
+                    this->extractOccurrence(plan, begin, beginMSec, end, output, pushPopOnly, oldEnd);
+                }
+            }
+        }
+        
+        std::sort(output.getData().begin(), output.getData().end(), compareOccurrences);
+    }
+    
+    void Engine::extractOccurrence(Plan* plan, const QDateTime& begin, const Int64& beginMSec, const QDateTime& end, QObjectVector& output, bool pushPopOnly, const QDateTime& oldEnd)
+    {
+        if (plan != nullptr){
+            
+            Int numObjectives = plan->objectives()->size();
+            
+            if (!numObjectives) return;
+            
+            for (QObject* object:plan->instances()->getData()){
+                Instance* instance = static_cast<Instance*>(object);
                 
-                Int numObjectives = plan->objectives()->size();
+                Int64 length = instance->startTime().msecsTo(instance->endTime());
+                Int jumpMethod = 0;
+                //Int64 repeatGap = 0;
                 
-                if (!numObjectives) continue;
+                QDate instanceStartDate = instance->startTime().date();
+                Int instanceStartMonth = this->toMonthNumber(instanceStartDate);
+                QTime instanceStartTime = instance->startTime().time();
                 
-                for (QObject* object:plan->instances()->getData()){
-                    Instance* instance = static_cast<Instance*>(object);
+                QDateTime firstStartTime;
+                if (instance->repeatMode() == "days"){
+                    Int64 gap = c_dayMSec * instance->repeatParam();
+                    Int64 diff = beginMSec - length - instance->startTime().toMSecsSinceEpoch();
+                    Int64 jumps = diff / gap + 1;
+                    diff = jumps * gap;
+                    firstStartTime = instance->startTime().addMSecs(diff);
                     
-                    Int64 length = instance->startTime().msecsTo(instance->endTime());
-                    Int jumpMethod = 0;
-                    //Int64 repeatGap = 0;
+                    jumpMethod = 1;
+                }
+                else if (instance->repeatMode() == "months"){
+                    Int gap = instance->repeatParam();
                     
-                    QDate instanceStartDate = instance->startTime().date();
-                    Int instanceStartMonth = this->toMonthNumber(instanceStartDate);
-                    QTime instanceStartTime = instance->startTime().time();
+                    QDateTime minBegin = begin.addMSecs(-length);
+                    Int diff = this->toMonthNumber(minBegin.date()) - instanceStartMonth;
+                    Int jumps = diff / gap;
+                    if (jumps * gap < diff) jumps++;
+                    diff = jumps * gap;
                     
-                    QDateTime firstStartTime;
-                    if (instance->repeatMode() == "days"){
-                        Int64 gap = c_dayMSec * instance->repeatParam();
-                        Int64 diff = beginMSec - length - instance->startTime().toMSecsSinceEpoch();
-                        Int64 jumps = diff / gap + 1;
-                        diff = jumps * gap;
-                        firstStartTime = instance->startTime().addMSecs(diff);
-                        
-                        jumpMethod = 1;
-                    }
-                    else if (instance->repeatMode() == "months"){
-                        Int gap = instance->repeatParam();
-                        
-                        QDateTime minBegin = begin.addMSecs(-length);
-                        Int diff = this->toMonthNumber(minBegin.date()) - instanceStartMonth;
-                        Int jumps = diff / gap;
-                        if (jumps * gap < diff) jumps++;
-                        diff = jumps * gap;
-                        
-                        QDate newMonthDate = this->fromMonthNumber(instanceStartMonth + diff);
+                    QDate newMonthDate = this->fromMonthNumber(instanceStartMonth + diff);
+                    newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
+                    
+                    QDateTime result(newMonthDate, instanceStartTime, Qt::UTC);
+                    if (result <= minBegin) {
+                        newMonthDate = newMonthDate.addMonths(gap);
                         newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
-                        
-                        QDateTime result(newMonthDate, instanceStartTime, Qt::UTC);
-                        if (result <= minBegin) {
-                            newMonthDate = newMonthDate.addMonths(gap);
-                            newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
-                            result.setDate(newMonthDate);
-                        }
-                        firstStartTime = result;
-                        
-                        jumpMethod = 2;
+                        result.setDate(newMonthDate);
                     }
-                    else if (instance->repeatMode() == "years"){
-                        Int gap = instance->repeatParam();
-                        
-                        QDateTime minBegin = begin.addMSecs(-length);
-                        Int diff = minBegin.date().year() - instanceStartDate.year();
-                        Int jumps = diff / gap;
-                        if (jumps * gap < diff) jumps++;
-                        diff = jumps * gap;
-                        
-                        QDate newMonthDate(instanceStartDate.year() + diff, instanceStartDate.month(), 1);
-                        newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
-                        
-                        QDateTime result(newMonthDate, instanceStartTime, Qt::UTC);
-                        if (result <= minBegin) {
-                            newMonthDate = newMonthDate.addYears(gap);
-                            newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
-                            result.setDate(newMonthDate);
-                        }
-                        firstStartTime = result;
-                        
-                        jumpMethod = 3;
-                    }
-                    if (instance->endTime() > begin || instance->repeatMode() == "none"){
-                        firstStartTime = instance->startTime();
-                    }
+                    firstStartTime = result;
                     
-                    if (instance->repeatMode() != "none"){
-                        bool isForever = instance->isForever();
-                        while (firstStartTime < end && (isForever || firstStartTime <= instance->repeatUntil())){
-                            //make an occurrence
-                            //qDebug() << firstStartTime << firstStartTime.addMSecs(length) << (static_cast<Plan*>(instance->plan())->name());
-                            Occurrence* occurrence = new Occurrence();
-                            QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
-                            
-                            occurrence->setStartTime(firstStartTime);
-                            occurrence->setEndTime(firstStartTime.addMSecs(length));
-                            occurrence->setPlan(plan);
-                            occurrence->setInstance(instance);
-                            occurrence->status.fill(0, numObjectives);
-                            occurrence->statusNow.fill(0, numObjectives);
-                            
-                            if (!pushPopOnly || occurrence->startTime() > oldEnd) output.push(occurrence);
-                            
-                            //next
-                            
-                            if (jumpMethod == 1){
-                                firstStartTime = firstStartTime.addDays(instance->repeatParam());
-                            }
-                            else if (jumpMethod == 2){
-                                QDate firstStartDate = firstStartTime.date().addMonths(instance->repeatParam());
-                                firstStartDate.setDate(firstStartDate.year(), firstStartDate.month(), std::min(instanceStartDate.day(), firstStartDate.daysInMonth()));
-                                firstStartTime.setDate(firstStartDate);
-                            }
-                            else if (jumpMethod == 3){
-                                QDate firstStartDate = firstStartTime.date().addYears(instance->repeatParam());
-                                firstStartDate.setDate(firstStartDate.year(), firstStartDate.month(), std::min(instanceStartDate.day(), firstStartDate.daysInMonth()));
-                                firstStartTime.setDate(firstStartDate);
-                            }
-                        }
+                    jumpMethod = 2;
+                }
+                else if (instance->repeatMode() == "years"){
+                    Int gap = instance->repeatParam();
+                    
+                    QDateTime minBegin = begin.addMSecs(-length);
+                    Int diff = minBegin.date().year() - instanceStartDate.year();
+                    Int jumps = diff / gap;
+                    if (jumps * gap < diff) jumps++;
+                    diff = jumps * gap;
+                    
+                    QDate newMonthDate(instanceStartDate.year() + diff, instanceStartDate.month(), 1);
+                    newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
+                    
+                    QDateTime result(newMonthDate, instanceStartTime, Qt::UTC);
+                    if (result <= minBegin) {
+                        newMonthDate = newMonthDate.addYears(gap);
+                        newMonthDate.setDate(newMonthDate.year(), newMonthDate.month(), std::min(instanceStartDate.day(), newMonthDate.daysInMonth()));
+                        result.setDate(newMonthDate);
                     }
-                    else if (firstStartTime.addMSecs(length) > begin && firstStartTime < end) {
+                    firstStartTime = result;
+                    
+                    jumpMethod = 3;
+                }
+                if (instance->endTime() > begin || instance->repeatMode() == "none"){
+                    firstStartTime = instance->startTime();
+                }
+                
+                if (instance->repeatMode() != "none"){
+                    bool isForever = instance->isForever();
+                    while (firstStartTime < end && (isForever || firstStartTime <= instance->repeatUntil())){
                         //make an occurrence
                         //qDebug() << firstStartTime << firstStartTime.addMSecs(length) << (static_cast<Plan*>(instance->plan())->name());
                         Occurrence* occurrence = new Occurrence();
@@ -1715,12 +1704,41 @@ namespace LPP
                         occurrence->statusNow.fill(0, numObjectives);
                         
                         if (!pushPopOnly || occurrence->startTime() > oldEnd) output.push(occurrence);
+                        
+                        //next
+                        
+                        if (jumpMethod == 1){
+                            firstStartTime = firstStartTime.addDays(instance->repeatParam());
+                        }
+                        else if (jumpMethod == 2){
+                            QDate firstStartDate = firstStartTime.date().addMonths(instance->repeatParam());
+                            firstStartDate.setDate(firstStartDate.year(), firstStartDate.month(), std::min(instanceStartDate.day(), firstStartDate.daysInMonth()));
+                            firstStartTime.setDate(firstStartDate);
+                        }
+                        else if (jumpMethod == 3){
+                            QDate firstStartDate = firstStartTime.date().addYears(instance->repeatParam());
+                            firstStartDate.setDate(firstStartDate.year(), firstStartDate.month(), std::min(instanceStartDate.day(), firstStartDate.daysInMonth()));
+                            firstStartTime.setDate(firstStartDate);
+                        }
                     }
                 }
+                else if (firstStartTime.addMSecs(length) > begin && firstStartTime < end) {
+                    //make an occurrence
+                    //qDebug() << firstStartTime << firstStartTime.addMSecs(length) << (static_cast<Plan*>(instance->plan())->name());
+                    Occurrence* occurrence = new Occurrence();
+                    QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
+                    
+                    occurrence->setStartTime(firstStartTime);
+                    occurrence->setEndTime(firstStartTime.addMSecs(length));
+                    occurrence->setPlan(plan);
+                    occurrence->setInstance(instance);
+                    occurrence->status.fill(0, numObjectives);
+                    occurrence->statusNow.fill(0, numObjectives);
+                    
+                    if (!pushPopOnly || occurrence->startTime() > oldEnd) output.push(occurrence);
+                }
             }
-        }        
-        
-        std::sort(output.getData().begin(), output.getData().end(), compareOccurrences);
+        }
     }
     
     /*

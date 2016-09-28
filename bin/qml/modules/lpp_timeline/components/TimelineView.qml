@@ -187,7 +187,7 @@ ColumnLayout {
             onClicked: {
                 var date = new Date(timeline.cameraTime);
                 calendar.show(new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()), function (date) {
-                    timeline.setCamera(date.getTime(), timeline.cameraZoomDest);
+                    timeline.setCamera(date.getTime(), timeline.cameraZoom);
                 }, cameraTimeTxt.text);
             }
         }
@@ -202,7 +202,7 @@ ColumnLayout {
             Label{
                 id: cameraTimeTxt
                 anchors.centerIn: parent
-                text: Engine.timeToStringRead(new Date(timeline.cameraTimeDest));
+                text: Engine.timeToStringRead(new Date(timeline.cameraTime));
                 font.bold: true
             }
         }

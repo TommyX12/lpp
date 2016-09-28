@@ -11,8 +11,8 @@ ApplicationWindow {
     visible: false
     id: window
     minimumWidth: 400
-    minimumHeight: 380
-    title: qsTr("Edit Instance")
+    minimumHeight: 460
+    title: qsTr("Edit Attached Mission")
     flags: Qt.Dialog;
     modality: Qt.WindowModal
     maximumHeight: minimumHeight
@@ -25,17 +25,23 @@ ApplicationWindow {
     property var timeFrameLimit: dayLength * 3650; 
     
     property Plan plan;
-    property Instance instance;
+    property Instance instance: plan == null ? null : plan.instances.at(0);
+    property Objective objective: plan == null ? null : plan.objectives.at(0);
     
-    function show(_plan, _instance){
+    function show(_plan){
         window.visible = true;
         plan = _plan;
-        instance = _instance;
+        
+        lengthSelector.setMinutes(objective.length);
         
         intvSelector.begin = Engine.timeToString(instance.startTime);
         intvSelector.end = Engine.timeToString(instance.endTime);
         
-        repeatSelector.loadFromInstance(instance)
+        repeatSelector.loadFromInstance(instance);
+        
+        nameTxt.text = plan.name;
+        
+        nameTxt.focus = true;
     }
     
     function save(){
@@ -54,12 +60,22 @@ ApplicationWindow {
             return;
         }
         
+        var length = lengthSelector.getMinutes();
+        if (length < 0) {
+            mainWindow.showError(qsTr("Error"), qsTr("Invalid time amount."));
+            return;
+        }
+        
         if (!repeatSelector.saveToInstance()) return;
+        
+        objective.length = length;
         
         instance.startTime = editBeginDate;
         instance.endTime = editEndDate;
         
-        Engine.savePlan(plan);
+        plan.name = nameTxt.text;
+        
+        Engine.saveAction(objective.action);
         
         window.close();
     }
@@ -70,6 +86,29 @@ ApplicationWindow {
         anchors.leftMargin: 10
         anchors.rightMargin: 10
         anchors.bottomMargin: 10
+        
+        GroupBox {
+            title: qsTr("Name")
+            Layout.fillWidth: true
+            Layout.minimumWidth: 100
+            Layout.maximumWidth: 65536
+            TextField {
+                id: nameTxt
+                anchors.left: parent.left
+                anchors.right: parent.right
+            }
+        }
+        
+        GroupBox {
+            title: qsTr("Amount")
+            Layout.fillWidth: true
+            Layout.minimumWidth: 100
+            Layout.maximumWidth: 65536
+            DurationSelector {
+                id: lengthSelector
+                anchors.fill: parent
+            }
+        }
         
         GroupBox {
             title: qsTr("Time Frame")

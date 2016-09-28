@@ -20,12 +20,8 @@ Item {
     
     property var backHandler: null;
     
-    Finder {
-        id: finder
-    }
-    
     function findAction(){
-        finder.show(false, true, false, selectAction, qsTr("Select Action for New Objective"));
+        root.finder.show(false, true, false, selectAction, qsTr("Select Action for New Objective"));
     }
     
     function selectAction(item){
@@ -58,6 +54,11 @@ Item {
     
     function save() {
         name.text = name.text.trim();
+        
+        if (name.text.length == 0){
+            mainWindow.showError(qsTr("Error"), qsTr("Name cannot be empty."));
+            return;
+        }
         
         var i, item;
         for (i = 0; i < currentItem.parentFolder.plans.size; i++){
@@ -246,7 +247,7 @@ Item {
             
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             Layout.fillWidth: true
-            Layout.minimumHeight: 200
+            Layout.minimumHeight: 250
             Layout.maximumHeight: Layout.minimumHeight
             
             GridLayout {
@@ -402,28 +403,28 @@ Item {
                     Item {
                         
                         width: objScroll.flickableItem.width
-                        height: objContainer.height + 30 + addObjBtn.height
+                        height: objContainer.height + 15 + addObjBtn.height
                         
                         ColumnLayout{
                             
-                            y: 10
+                            y: 5
                             
                             id: objContainer
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: 5
                             anchors.right: parent.right
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 5
                         }
                         
                         ObjectiveItem{
                             id: addObjBtn
                             objective: null
                             anchors.top: objContainer.bottom
-                            anchors.topMargin: 10
+                            anchors.topMargin: 5
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: 5
                             anchors.right: parent.right
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 5
                             
                             button.onClicked: findAction();
                         }
@@ -465,23 +466,23 @@ Item {
                         ColumnLayout{
                             id: insContainer
                             
-                            y: 10
+                            y: 5
                             
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: 5
                             anchors.right: parent.right
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 5
                         }
                         
                         ObjectiveItem{
                             id: addInsBtn
                             objective: null
                             anchors.top: insContainer.bottom
-                            anchors.topMargin: 10
+                            anchors.topMargin: 5
                             anchors.left: parent.left
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: 5
                             anchors.right: parent.right
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 5
                             
                             button.onClicked: {
                                 var instance = currentItem.createInstance();

@@ -13,7 +13,7 @@
 
 namespace LPP 
 {
-    class Session;
+    class Plan;
     
     class Action: public IQmlSearchable, public ISavable
     {
@@ -25,6 +25,8 @@ namespace LPP
         Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
         Q_PROPERTY(QString note READ note WRITE setNote NOTIFY noteChanged)
         Q_PROPERTY(Folder* parentFolder READ parentFolder NOTIFY parentFolderChanged)
+        
+        Q_PROPERTY(QObjectVector* plans READ plans NOTIFY plansChanged)
         
     public:
         
@@ -52,9 +54,18 @@ namespace LPP
         
         virtual QString getFileName();
         
+        static bool comparePlans(QObject*, QObject*);
+        
+        QObjectVector* plans();
+        
+        Q_INVOKABLE QObject* createPlan();
+        Q_INVOKABLE bool deletePlan(QObject*);
+        
     private:
         Int m_id;
         QString m_name, m_note;
+        
+        QObjectVector m_plans;
         
         //QVector<Session*> m_sessions;
         
@@ -66,5 +77,7 @@ namespace LPP
         void parentFolderChanged();
         
         void typeChanged();
+        
+        void plansChanged();
     };
 }

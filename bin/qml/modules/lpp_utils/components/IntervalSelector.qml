@@ -10,7 +10,7 @@ GridLayout {
     rows: 3
     flow: GridLayout.LeftToRight
     columns: 3
-    rowSpacing: 10
+    rowSpacing: 5
     
     property alias begin: beginTxt.text;
     property alias end: endTxt.text;

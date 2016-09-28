@@ -12,6 +12,10 @@ Item {
     
     property Occurrence object: null;
     property int index: 0;
+    property var list: null;
+    
+    property Plan plan: object == null ? null : object.plan;
+    property Action action: plan == null ? null : plan.objectives.at(0).action;
     
     function refresh(){
         
@@ -46,6 +50,7 @@ Item {
                 else if (object.impossible) return "#ff0000"
                 else if (object.progress < 1.0) return "#eebb55"
                 else if (object.progressNow == 1.0) return "#44cc44"
+                else if (object.progressNow > 0.0) return "#5588ff"
                 else return "#cccccc"
             }
             
@@ -64,7 +69,7 @@ Item {
             Rectangle {
                 width: 15
                 height: 12
-                color: object == null ? "#000000" : object.plan.parentFolder.color
+                color: object == null ? "#000000" : (plan.parentFolder == null ? action.parentFolder.color : plan.parentFolder.color)
             }
             
             Label {
@@ -73,7 +78,7 @@ Item {
                 
                 color: button.label.color
                 
-                text: object == null ? "" : object.plan.name
+                text: object == null ? "" : (plan.name.length == 0 ? action.name : plan.name)
             }
             
             Label {
@@ -87,7 +92,7 @@ Item {
             }
         }
         
-        //buttonColor: object == null ? "#000000" : object.plan.parentFolder.color
+        //buttonColor: object == null ? "#000000" : plan.parentFolder.color
         buttonColor: "#E0E0E0"
         
         text: ""
@@ -102,7 +107,7 @@ Item {
         anchors.right: button.right
         anchors.top: button.bottom
         height: 4
-        progress1: object.progress
-        progress2: object.progressNow
+        progress1: object == null ? 0 : object.progress
+        progress2: object == null ? 0 : object.progressNow
     }
 }

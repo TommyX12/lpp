@@ -12,7 +12,7 @@ namespace LPP
         
         this->m_id = -1;
         
-        this->m_name = "--";
+        this->m_name = "";
         this->m_note = "";
         this->m_color.setRgb(200, 200, 200, 255);
         this->m_useParentFolderColor = false;

@@ -38,9 +38,9 @@ Item {
     property real bottomTime;
     
     property real cameraTime;
-    property real cameraTimeDest;
+    //property real cameraTimeDest;
     property real cameraZoom;
-    property real cameraZoomDest;
+    //property real cameraZoomDest;
     property real cameraZoomDefault: 4;
     property real cameraZoomMin: 1;
     property real cameraZoomMax: 32;
@@ -73,9 +73,9 @@ Item {
     property alias snapNow: snapNowBox.checked
     property alias snapMarker: snapMarkerBox.checked
     property alias snapTime: snapTimeBox.checked
-    property real snapNowRange: minuteLength * 60 / cameraZoomDest;
-    property real snapMarkerRange: minuteLength * 80 / cameraZoomDest;
-    property real snapTimeRange: minuteLength * 40 / cameraZoomDest;
+    property real snapNowRange: minuteLength * 60 / cameraZoom;
+    property real snapMarkerRange: minuteLength * 80 / cameraZoom;
+    property real snapTimeRange: minuteLength * 40 / cameraZoom;
     property real snapTimeInterval: minuteLength * 15;
     
     property bool activeDrawEnabled: false;
@@ -89,11 +89,11 @@ Item {
         id: animatorEase
         NumberAnimation{duration: 220; easing.type: Easing.Linear}
     }
-    Behavior on cameraTime {
+    Behavior on topTime {
         id: cameraTimeEase
         NumberAnimation{duration: 200; easing.type: Easing.OutQuad}
     }
-    Behavior on cameraZoom {
+    Behavior on bottomTime {
         id: cameraZoomEase
         NumberAnimation{duration: 200; easing.type: Easing.OutQuad}
     }
@@ -167,7 +167,7 @@ Item {
         }
         if (Math.abs(cameraLockBias) < cameraLockRadius) {
             var timeDelta = cameraLockBias;
-            setCamera(Engine.currentTime().getTime() + cameraLockBias, cameraZoomDest);
+            setCamera(Engine.currentTime().getTime() + cameraLockBias, cameraZoom);
             cameraLockBias = timeDelta;
         }
         else cameraControl();
@@ -181,7 +181,7 @@ Item {
     }
     
     function cameraControl(){
-        cameraLockBias = cameraTimeDest - Engine.currentTime().getTime();
+        cameraLockBias = cameraTime - Engine.currentTime().getTime();
         var viewRadius = maxViewRadius / cameraZoom;
         topTime = Math.max(Engine.timelineMin.getTime(), cameraTime - viewRadius);
         bottomTime = Math.min(Engine.timelineMax.getTime(), cameraTime + viewRadius);
@@ -189,26 +189,24 @@ Item {
         else reposition();
     }
     function setCamera(time, zoom){
-        cameraTimeDest = time;
-        cameraZoomDest = zoom;
+        cameraTime = time;
+        cameraZoom = zoom;
         startAnimation();
     }
     function moveCamera(timeDelta, zoomDelta){
-        cameraTimeDest += timeDelta;
-        cameraZoomDest += zoomDelta;
+        cameraTime += timeDelta;
+        cameraZoom += zoomDelta;
         startAnimation();
     }
     function resetCamera(resetTime, resetZoom){
-        if (resetTime) cameraTimeDest = Engine.currentTime().getTime();
-        if (resetZoom) cameraZoomDest = cameraZoomDefault;
+        if (resetTime) cameraTime = Engine.currentTime().getTime();
+        if (resetZoom) cameraZoom = cameraZoomDefault;
         startAnimation();
     }
     
     function startAnimation(){
-        cameraTimeDest = Utils.clamp(cameraTimeDest, Engine.timelineMin.getTime(), Engine.timelineMax.getTime());
-        cameraZoomDest = Utils.clamp(cameraZoomDest, cameraZoomMin, cameraZoomMax);
-        cameraTime = cameraTimeDest;
-        cameraZoom = cameraZoomDest;
+        cameraTime = Utils.clamp(cameraTime, Engine.timelineMin.getTime(), Engine.timelineMax.getTime());
+        cameraZoom = Utils.clamp(cameraZoom, cameraZoomMin, cameraZoomMax);
         animator = animator < 0.5 ? 1.0 : 0.0;
     }
     onAnimatorChanged: {

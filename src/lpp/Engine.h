@@ -186,7 +186,8 @@ namespace LPP
         static bool compareOccurrences(QObject*, QObject*);
         
         QObjectVector* occurrences();
-        void extractOccurrences(QDateTime, QDateTime, QObjectVector&, bool = false);
+        void extractAllOccurrences(QDateTime, QDateTime, QObjectVector&, bool = false);
+        void extractOccurrence(Plan*, const QDateTime&, const Int64&, const QDateTime&, QObjectVector&, bool, const QDateTime&);
         void checkConflicts();
         
         static bool compareMissionPoints(MissionPoint*, MissionPoint*);
