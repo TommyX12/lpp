@@ -1,0 +1,1199 @@
+//collaboration
+
+//save change to project when entering project edit mode
+
+//able to stop schedule at day or remove stop.
+//non-repeating schedule can merge if they have connecting time
+//free time display for each deadline shows min time for all below deadline
+//convert task to project, or use one type
+
+//allow schedule conflict, set priority on tasks to choose which one to use
+
+
+//use AI
+//port to cpp w/ Qt widgets or Qt quick or wxWidgets or SFML, potentially go mobile or go browser-based / online (cloud info storage, connect with others), make opensource, modular, extendable, for example can have custom skin.
+//localization. embed font.
+//once open source, make people submit stuff and compete for user approval, such as script, mods, motivational words to sleep early.
+	//licensing?
+//utilize people's low-level motivations(competition, reward)
+//qt quick or qt custom style and skin
+//any UI specific stuff use QML and Javascript. any app logic use c++.
+//have stuff like thunder's always-on-top helper
+//auto save
+//if online, be possible to make local backup copy, sync with backup module.
+//backup or sync online, for knowledge and all.
+//once done, integrate all knowledge and notes into here. (ip misc, phone, knowledge in create, knowledge from drive, knowledge to learn, anote future/可让/model/things to add to model, toolsiknow, project specific, notebook etc, c++ knowledge and stuff like that, drive, current time manager, stuff learned in school), and only make temporary storage space there and integrate later.
+//give to parent
+//transition and state change in qt. animations
+//modules:
+	//mimic RPG game system. maybe an iron man core like main menu with surrounding icon being character stats, inventory, quests, skill trees etc.
+		
+	//path to external tools (notepad++ etc)
+	//graph structure time and task management
+	
+		/*
+		TODO queue:
+			!!!make sure virtual destructor on everything
+			!!!make sure saving and loading of params are up to date
+				same goes for copying
+			!!!make sure all changes in memory reflect in drive
+			!!!make sure parent change are dispatched for all edits, such as color & fullPath, when moving / copying.
+			!!!make sure editor catch all dirty changes
+			!!!remember to delete everything on heap
+			!!!always explicitly set width and height of any window instance.
+			!!!ensure object ownership
+			!!!ensure qml does not access out of access interval.
+			!!!all module beware of library modification and defend.
+				!!!disengage any binding to library items when leaving module. 
+			!!!make sure any tutorial element is up to date
+			!!!monitor memory usage
+			!!!make sure engine dirty flag is correctly reflected in any setters ctor dtor etc.
+			//session + timeline editing
+				//see data structure, finish up (things left in cpp such as deleting affecting timeline, when to call (setting up cpp events), and things in qml)
+					//make created month monthMarker date UTC
+					//make it so that get marker after should return correct month(use a lower bound) if marker right on monthMarker
+				//navigation
+				//try and make it so that engine saves on every qml change batch, plus the per second save.
+				//auto draw
+					//engine refresh after change.
+					//use search (make search a window) to set things.
+					//if active action is deleted (connect to engine event of deletion which gives ID), immediately change to null active action (free time).
+					//as long as app active, on every sec, draw region from [rounded-to-minute last updated time] to [curret time which will be rounded].
+					//autosave after drawing.
+				//additional features:
+					//auto update camera as time goes by, if currently now is inside small range of camera time.
+				//test the features for any bugs
+					//check if merging works.
+					//check if intervals are correct, nothing loaded too much, nothing too less.
+					//check border cases on intervals
+					//able to click on free time region (not the infinite ones) to start editing.
+					//editing accuracy etc.
+				//make visualization prettier, see below.
+				//manual draw. 
+					//make possible to select in library and start drawing.
+					//engine refresh after change
+					//activate overriding top mouse area,
+					//able to click on free time region (not the infinite ones) to start editing.
+					//switch to warning for overlength sessions.
+					//enable / disable snapping to marker and to time interval.
+				//select on timeline and go to editor.
+					//see below
+			//add option to set session begin / end to now.
+			//show length of session as day-hour:min for every session menu. and also drawing menu. read only.
+			//adding plan editor and add new plan
+				//see below mission section.
+				//check auto delete objective if action deleted (implement in cpp deleteAction), then force save;
+				//have a func to display time interval in short form, for example only show the different part like 2016-09-07 17:35 - 18:00, or 2016-09-07 00:00 - 08 00:00
+					//use this in instanceItem, and timeline overview
+				//overview will have a refresh scheme similar to timeline:
+					//enter module, loaded, timeline modified.
+				//no longer sort plan objectives.
+				//change instance to start and end time instead of length.
+				//check behaviour of addMonths and addYears of datetime
+				//the few properties:
+					//dirty flag for: conditionChanged, sessionChanged
+					//new classes! yay!:
+						//Occurrence.
+					//occurrence list, contains:
+						//info about whether conditions are impossible or not, by having a nullptr at the end meaning impossible.
+						//a list of occurrences in the form of pointers [begin, end, plan*, status(a boolean vector corresponding to plan objectives)]
+				LOOK HERE:
+					alternative:
+						when claim, write amount already done to the occurrences and store them as long as they are still active. only regen all if occurrences are changed.
+							this makes checkConflicts no longer need to run when timeline edited, but need to change a lot of other things such as how to update occurrences 
+				give some of these to h
+				//the few functions:
+					//#updateOccurrences and checkConditions and checkConflicts use m_
+					//#dirty flag implementation all in cpp engine.
+					//#change QML side to fit this current model. no longer updateOccurrences everytime timeline editing is done. just refresh, since session flag will be set by engine funcs.
+					//updateOccurrences():
+						//#called when condition dirty in occurrence list getter
+						//#set dirty flag when condition info modified: 
+							//engine loaded, engine refreshed, action(since it might affect folder objective in the future) / folder / plan / objective / instance - added / modified / deleted.(implement in constructor, setter, destructor)
+						//explicitly set the begin time var (later reward will use it)
+						//clear and regenerate recent occurrence list, //checkConditions().
+							//remember to make cpp ownership of stuff.
+						//will pick out missions that touched the planning range:
+							//sorted by start time.
+							//CRASH WHEN LOADING A MISSION WITH MONTHLY REPEAT
+							//change month and year system so that: 
+								//all jumping let start time follow Qt addMonth rule (clamping)
+								//time frame length is maintained with start time as main reference (always add a length to get end time)
+								//obtain first by finding first occurrence with start time in range, and go backward.
+							//remove debug msg
+						//reset flag.
+					//checkConditions():
+						//#called when session dirty in occurrence list getter, after possible updateOccurrences.
+						//#set dirty flag when timeline info modified only.
+						//check if impossible to complete some stuff.
+						//checks for condition violation (even if impossible to complete all) and write to occurrences status in list.
+							//N = num occurrence, M = num marker, T = num actions
+							//rejected naive: use O(NM) by checking whole timeline for each occurrence, 
+								//O(1) space
+							//preferred alternative: O(NlogN + M + T):
+								//O(T) space
+								//list out the begin and end of all occurrences, sort them all (end ones has a pointer to its start one).
+									//consider multiple objectives to be multiple points, each having only 1 action.
+								//point class:
+									//time
+									//objective progress at this point
+									//pointer to start point (if null, itself is start point)
+									//pointer to occurrence
+									//objective index
+									//pointer to objective
+								//go through each, use only one actionAmount or hell maybe an O(1) retrieval array.
+								//for each point:
+									//increment the accumulator storing each action done time since first point to current point by going through each marker in between.
+										//remember to interpolate
+										//later optimize: if skipping over a month, use cache just like the below method.
+									//get the time done since first point for THAT action and store it in the point.
+									//if its end point, find its start point by pointer, calculate difference, and write status to the corresponding objective index in the occurrence.
+						//reset flag.
+						//if enabled and violation true do autoPlan().
+					//checkConflicts():
+						//#called in checkConditions (inlined);
+						//check if impossible to complete recent occurrences, if true, write result to occurrence list.
+							//remember [begin, end)
+							//cache all mission interval that touches planning range (a copy from the occurrences list? elaborate on this)
+							//the ones that start before range is cut to now using what the past has done. maybe if any interval requires 0, ignore it.
+								//use the same functions that checkConditions use to cut it, but do not kill cache after.
+								//ideas:
+									//for occurrence that will be cut:
+										//add another start point at "now" with start point to actual start, 
+										//which will be detected by end point and process into appropriate greedy interval for steps below
+							//modify the algorithm to implement completion mode ANY (right now is ALL).
+								//re-do the missionPoint-to-range conversion to only make 1 range per occurrence
+									//when writing ranges in current algo, write that range requirement info to occurrence additional status through a func that process (all = sum, any = min)
+									//turn those to ranges after point processing.
+							//preferred alternative:
+								//sort by end time, then by start time.
+								//for each range, try to do it as early as possible, using a c++ set to keep track of free ranges.
+					//Extra:
+						//extend planning range to 365 days, but use a reduced range for autoPlan().
+						//break point of condition impossible (store as occurrence pointer).
+						//idea:
+							//instead of making "condition impossible" meaning cannot be completed with zero plans ahead,
+								//it now means cannot be completed by adding things to free sessions ahead.
+								//conflict check will generate std::set based on free sessions ahead.
+								//also it will no longer cache completed requirements in the past (comment them out instead of deleting). 
+									//it will now use the total remaining requirement (future plans considered) to calculate sum/min and generate 1 interval for each occurrence
+							//now autoplan is easier because it will only ever write to free sessions, and will not overwrite user's plan.
+								//auto plan will use the same things generated by the 1 year planning range, only that the drawing is clamped to 16 days or 1 month.
+									//and generate *multiple* intervals for each occurrence with mode = all.
+									//if mode = any, keep track of the least-required action.
+								//use a window to do autoplan. which can specify to overwrite all plans, not just free sessions.
+									notify user when it fails halfway.
+									maybe let user choose which occurrences to work with.
+									//maybe let user choose full override instead of freetime only.
+									maybe let user choose planning range.
+									//let user do quick erase (maybe a day, or all future plans(if user want complete auto plan)) and then run autoplan.
+								//solve this:
+									//when adding temp action at start of 2 occurrences, push both back. how dafaq do you do that? old plan? watch out if impossible with 0 plans ahead!
+									//see if override can do this.
+					//QML autoPlan():
+						//#called when user requested or, if enabled, when violation true after checkConditions.
+						//remember to use getter instead of m_ for occurrences list for QML available functions.
+						//use a reduced planning range for this method.
+						//give option for check condition to operate on specific occurrence list
+						//it would not resolve all, because there is a limit to range. if a occurrence extends past the max planning range, it will use heuristics (such as assume avg const rate).
+						//rewrite stuffs in planning range to remove condition violations (not gauranteed).
+						//AI planning
+							//user can either specify always autodraw on conflictcheck or regularly(save this setting to a file), or have the button to auto draw manually.
+							//engine now refreshs per minute (put inside the auto draw block of qml).
+							//notes:
+								//maybe just write greedy to all with clamp.
+								//only do stuff if a occurrence is not okay (condition not completed in plan, or if longer than planning range, approximately how much not ok).
+								//first try to extend into freetime to solve problem. if can't do that, rewrite it with greedy, and maybe check whole thing again and greedy etc.
+								//maybe try best not to mess with user plans.
+								//separate marker by user-drawn and auto-drawn, and always erase auto-drawn ones when auto planning.
+									//a grey left margin for autoplanned sessions
+									//tell user that saving when editing session will change it to manual drawn ones.
+									//conflict check will NOT regard auto sessions as free-sessions
+								//attempt to draw as much as possible anyways even if it is impossible (same goes in conflictcheck)
+								attempt to mimic last configuration
+									ideas:
+										apply as that, and if it doesnt work will fall back.
+										to localize fall-back region, try making the mission-point list and see if any start or end point is encountered for previous non-greedy solution.
+										if a solution is optimal, another solution is also optimal if 2 region of task was exchanged, and that both region are within the overlaping ranges of missions that the 2 tasks contributed to.
+										may need temporary lists of sessions of each action, so that it knows what last solution is at.
+								research in scheduling problems.
+					//refine timeline GUI to:
+						//group editing operations into timeline or all to the side above overview.
+						//allow quick auto draw one click ?
+						//increase min height of timeline module
+						//can set action directly when enabling autodraw.
+						//make SimpleList able to use viewarea object pooling.
+							//maybe try back the pool all object system and see if it is really slower.
+							//potential optimization in the future for simplelist
+							//find out what makes it lag when refreshing. no component was loaded right?
+							//also find out why is autoplan actually faster now
+					mission list in timeline page
+						//let checkConditions also write how much is done til now.
+						//do not bind to occurrence list properties or impossible conditions, or use a global var to store occurrence list reference in qml. 
+							//it will not be updated until refresh func calls for list getter explicitly.
+						//make simplelist able to not use viewarea pooling. this is for subwindow.
+						display a red number / circle notification on each tab to show how many fufked up mission.
+						//display progress bar on occurrence
+							//a bar on the bottom of delegate, bg grey, 2 layer, bottom yellow being planned, top green being now-completed
+							//move label up a bit accordingly
+							//calculate occurrence-wise progress during checkConditions, to be used quickly by progress bars.
+						//display progress bar for objective in subwindow.
+						//find a way so that occurrence don't nullify when autodraw. 
+							//also solve the pooledlist resetting problem.
+							//force window close when is actually nullify (test this).
+						//bug: objectiveitem not updating progress as time passes
+							//be careful about instanceitem as well in plan editor
+						//subwindow will be used to be able to go to the mission in library(which will in turn able to go to objective-actions in library)
+						have one special menu that displays ALL the impossible missions in planning range, not jjust autoplan range.
+						//able to goto occurrence start time in subwindow, watch out for out of bound.
+						elaborate on what info to display (and what in subwindow, what in delegate):
+							//mission name and other basic info, //overall 2progress and objective 2progress.
+							//mission fail, //complete, //completable by plan, //condition impossible + break point, //not completable by plan, being contributed by active action (or if disabled, closest marker before)
+							//how much it requires (in the collective sense during conflictcheck), //how much done in plan, //how much left, //how long is duration range, 
+							how long is total free-time in here, //how much already done til now
+							how much free time is in some periodic time period like a month or a day.
+					#test all of the things see if it works. namely, 
+						the repeating tests, checkConditions for long ranges, cases with null marker at one or both end, conflictcheck.
+						past contribution to missions
+						watch out for when over-completing objective, and when objective length / occurrence length too long.
+						pushing of new occurrence as time goes by
+			put this shit on git
+			think of a better way to make missions easier to generate, and anonymous ones.
+				attached missions (single objective missions belong to an action.) easy to make, and may be temporary (deleted afterwards).
+					can be named or unnamed.
+				create attached missions from timeline, by drawing interval, specifying stuff, and selecting parent folder (special button for rootfolder).
+				maybe make possible to create multiple objective-instance pairs in a single mission? or like the traditional ones?
+				think of homeworks. like learn latex with a flex due date.
+				how to show less missions in mission list and only show the important ones? let user select for a mission to hide in mission list?
+					maybe do not display mission with no reward. have a option in mission list.
+				how to not always need to make eat half hour?
+					consider always draw time-required mission before progress missions (since they are more flexible and can be rushed)
+			draging to move sessions, drag horizontally to scale sessions. with snapping. with size limit as to max drawing range
+			reminder, folder, and progress system.
+				maybe implement reminder like a note special char system (having some char in note meaning reminder, and will be listed in somewhere).
+				also static reminder that is always there??
+				see below missions etc.
+				also isolate upcoming reminder display.
+			free-time display for total unplanned sessions in interval, and also for the traditional duration minus requirement.
+			have an option to disable auto drawing, but still have the refresh stuff happen. this is in qml side.
+				or simply disable drawing when "doing nothing".
+			maybe extend autoplan range to 16 or more.
+			make SimpleButton able to have checkable. Then change all Qt Quick Control button to SimpleButton.
+			make possible to specify duration in interval selector
+			when creating missions, can create from template (timeframe = requirement etc)
+			make sure again that no visual event is dispatched to invisible modules.
+			sort folder children
+			make some label able to hide partially due to width too small. apply to fullpaths and timespan str
+			timeline simplification: remove the 5min lower sessions of free time to reduce timeline size. 
+				can implement in mergeMarkers(maybe limit drawing so it doesnt draw empty sessions of less than 5 min), or during loading, or simply let reward motivate user to clean up.
+				or make autoplan smarter and only start drawing when already 5 min passed.
+			advanced AI:
+				modularize the auto plan function. (generate points -> get req from points etc)
+				follow other ideas about autoplan, such as mimic current, and smart overwrite, and taking breaks not always working on something.
+				see below AI section, mission section, and everything.
+				also use heuristic predictions, such as linear guessing if this much is done now, same amount prob done in future.
+				or just use machine learning for this. simple greedy really can't get shits right.
+				experimental: attempt mimic past user configurations
+			move and scale selected session for editing.
+			multi-selecting, //item-moving, item-copying (single selected only, simply load the file from filesystem again).
+				//(remember to check for name conflict, and to reflect in filesystem)
+			custom font
+			add an option to quit but preserve auto-draw. no longer force sleep/hibernation.
+			rewards and character
+			overview / statistics, free time visualization
+			stuff in src file TODO
+			basic feature
+			things in this file
+			try
+			update to 5.7, maybe port to qt quick controls 2
+			advanced feature
+			optimizations
+		*/
+	
+		//augmented version of current system
+		//maybe use graph to organize. leaf nodes are schedules, task contain schedules, task type contain tasks / task types.
+		
+		//resemble game, like stats and stuff and reward
+	
+		//timeline and UI
+			//evey UI element of timeline (including overview, active list etc) refresh on entering module and timeline change.
+				//apply this to every module: refresh on enter + self edit.
+			//task list:
+				//can toggle visibility of each task so as too see covered schedules. can also set all visible.
+			//control center: 
+				//top is the game menu (all the stuffs, inventory, skills, quest), bottom is the stats, time remaining, and active quest display?
+			//non day-dependent. use continuous timeline. sleep of one day is one task.
+			//list of active repeating schedules, drag and drop to order. also active task goals maybe.
+				//once the list is modified, every day that schedule affects before and after is marked as dirty and will be updated when first visit. 
+			//quick task search: type in some word and seach then rank the task to be selected from. (algorithm: for each whole word, count max sequence matching). auto select the top choice and when hit enter, use it. also have a choice above top choice being create new task.
+			//drawing system. manual draw: enable edit mode on timeline, click on task to select as painter, then paint. active draw: specify what i am doing now (to be done regularly), and it auto draw until stopped (update each minute). 
+				//can also set draw and then restart, it will stay and assume you have been doing that when computer is off.
+			//or can click on specific block and drag + transform.
+			//menu that display all schedule for a task (separate past schedule and future schedule)
+			//also menu that display all occurrence for a task (displaying repeating schedule as separate entries)
+			//can clear active, also able to random choose from list.
+			//all selections use searchbar system, ex. searching used conditions, changing task types etc.
+			//calendar view, of color coded everyday snapshots. or have eveyday note listed for everyday.
+			//quest menu display the closest schedule of a task in the future.
+			//a list of active and upcoming missions todo (once) to be clicked and do, like quest list in games. do to get reward. include subtasks and "update knowledge". maybe integrade with dynamic schedules.
+				//a warning if active & upcoming cant be finished.
+				//unclaimed missions: current time is over mission range, but mission is within claim buffer. 
+					//if they are not completed, mark them as failed.
+				//active missions: current time is in mission range, 
+				//upcoming mission: current time before mission range. (mission occurrence(nearest only, or ALL), repeat count as multiple),
+				//able to click on mission and go to editor.
+				//able to click on mission and start doing it (have a list then choose from it, set as active action, or complete reminder)
+			//tells user how efficient they are compared to plan.
+			//out of app notification:	
+				//upcoming / finished session, mission, finishing of stuff.
+				//notify you to change active actions, and start doing new fresh missions.
+			//when active draw, display remaining plan requirement. emphasize: amount complete, amount free, amount remaining.
+			//can quick reschedule sessions. 
+			//can quick confirm reminders so they get deactivated, same goes for progress. have a list to click.
+			//make easy to specify things done that are diff from planned. maybe use simply drawing to overwrite.
+			//make easy to mark big area for a task, ex tmr afternoon plan with friends
+			//make easy to create exception for missions, ex. when going on trip.
+			//prior notification of upcoming things, like 30 min before.
+			//have extra note space for stuff. ex. note as to what happened today
+			//make easy to quick add for common scenarios, such as add one plan to finish doing something monday.
+			//(only check possible mission completion if mission end date is less than max planning distance away)
+			//make possible to disable auto planning system.
+			//make possible to stop mission repeat for a while and resume or notify to resume at some day.
+			//auto backup and stuff
+			//anonymous missions: temporary missions for daily uses, cannot repeat, gets destroyed afterwards.
+			//In action / mission page, able to show reward in navigation window and set reward of current item as relative 
+			//display free time in interval etc, also display 余地, the more that, the more reward buff. 
+			//styling user module single time and bindings
+			//display for aactive action:
+				//how long u ve been doing it
+				//how much reward gained for it
+				//how long til next marker
+				//note
+				//go and edit
+				//also fucking show the actual thing you should be working on, like the session being overwritten.
+			//able to click on timeline sessions and select that action / mission (plan) for edit
+				//mark this as selected marker on the right(disselect when exiting module), (or use separate window)
+				//can click to set active action.
+				//can click goto library then edit.
+				//can delete or move session.
+				//show exact start and end time, and length. can be changed (same as move session).
+				//also able to see which mission this contributes in
+				//note
+			//have notes on everything, like folder, day, session?, mission, plan, action
+			//connect with bg, maybe a dock, frameless window
+			//advanced searching algorithm(fuzzy + sequence matching, better prioritization of maxJPos, show items under the same folder together)
+			//week view, showing 7 days of schedule
+			//check for action ID conflict on load(do not load second one)
+			//EXPERIMENTAL: daily planning: every day able to buy some stuff
+			//do similar thing  as root connection check: sshow if an action is not called ANYWhere.
+			//EXPERIMENTAL: able to add a new action from the finder by launching another finder and select for folder ?
+			//straight forward free-time display system like current one. make time currency that trades for actions that gets reward.
+			//menu bar has options menu.
+				//edit max planning distance (for sessions, plan 1 month or 1 year ahead). 
+				//move, zoom sensitivity
+				//move, zoom button step
+				//default zoom range
+				//display action parent on timeline
+				//auto plan on checkConditions
+				//sorting
+			//shrink and partially display all fullpath, ex selector title, searchlist, selected (in overview) title, editor title, statistics title
+			//add #if to all debug prints
+			//EXPERIMENTAL: event trigger system of things, like the X3 notification system after order complete
+			//week view, month view (show only items not length(can be further represented, maybe a circle, or numerical))
+			//when objects are deleted, auto remove from id-referenced places such as timeline, plans.
+			//maybe make a separate loading splash screen like cryengine, since timeline may get large to load.
+			//timeline visualization
+				//!!!take care of lib modification, especially delete.
+				//max planning distance end, 
+				//visualization of missions (maybe by transparent long blocks and stuff)
+				//start of day, 
+				//completion of reminders, 
+				//time number for timeline etc.
+				//now line. make them look better.
+				//visualization of what action contributes to mission or reward. maybe add a colored line before action name on block.
+				//something do show fullpath of action, maybe by color or by reduced str. 
+			//library visuals:
+				//improve visualization of folders, actions, plans
+			//have a module component that selects time interval (for missions). this does not go out of bound.
+			//make sure if parameter not read from drive, create a default one, ex the passive drawing thing.
+				//or make passive drawing simply stop when exit, then confirm by user for all planned sesions in between (to get reward).
+			//use reminders to act as daily note. give way to add them quickly to a default plan (shortcut)
+				//this really requires timeline to update on any change made, also make editor check current folder viability when entering. (refresh when enter, check when refresh)
+			//tutorial:
+				//can use tooltip on buttons etc
+				//there is an option to quit and have auto draw continue. sleep/hibernating works too.
+				//able to click on free time region (not the infinite ones) to start editing.
+				//select on timeline and go to editor.
+				//mission is only for you absolutely requires a condition. do not use lightly.
+			//give a list of suggestions actions to do for free time, also for active actions give you list to select and set active right away. all of these refresh when entering module.
+			//give notification for anything going to happen close in the future.
+			//have option to force auto plan run.
+			//check for mission unable to complete (auto plan will always try to solve these upon edit) when refresh. 
+			//notify when a mission is complete, for user to select another mission to work on.
+			//daily constant reminders? maybe implement with repeating reminders
+			//special note for sessions? such as im eating this time but it's a party eating. or simply make another action.
+			//does not allow 2 instances of the app to be running at the same time.
+			//EXPERIMENTAL: allow launching app shortcut when starting an action.
+			//shortcut keys like enter for quick confirm
+			//get some default actions, missions, attributes etc.
+			//maybe whole thing into transparent rainmeter. show like QQ dock
+				//modify application window opacity
+			//enter powersaving mode when minimized or something.
+			//learn from other apps like outlook, apple, microsoft, google calendar, anote, task player, omnifocus etc.
+			//important tasks. make a view (maybe month view) to only show important items (not eating etc). like a traditional time manager.
+			//features similar to old time manager:
+				//able to list objective and deadline in order, to make a system similar to current homework note taking.
+					//can add this to tutorial: write them in note of action / plan, even better after note is connected to knowledge, 
+					//use built-in keywords to declare todo
+			//a watcher thread that check if the shit is closed unexpectedly, then re-launch.
+			//act as a hub for redirection. ex. record what app on this device is related to certain action, and project folders etc for quick launch.
+		//scripting system:
+			//experimental: design a custom language that can be used to define objective sets, complex time intervals, instances, etc. then write it 
+		//shortcut system:
+			//like x3 script.
+			//contains user made + preset macros (with editor component), that execute some things such as the convinient functions listed above (quick add etc)
+		//Modularization: 
+			//top will display a small status bar then a custom tab bar that:
+				//can flip page
+				//(can have icons. set layout min width)
+				//can transition
+				//when exiting tab, dispatch event to current tab which can be rejected (potential saving)
+			//(considering using qt quick controls tab view, check update in 5.7), in which modules can be selected. 
+			//Core modules on the left, including 
+				//timeline(sessions, overview of (character, missions, etc))
+				//character(stats, attributes, top action/missions, qualitative rewards)
+				//missions(actions, plans, mission)
+				//inventory(?, skin-like random rewards)
+				//skills(knowledge tree)
+				//etc
+				//newer modules can add custom. 
+			//PageView can be extended to load qml modules which are put in a folder. 
+			//Design qml files to be usable by other developers, and make some modules readily available to be used such as action selector or text editor. 
+				//expose as much module/js as possible in qmldir, also make some frequently used ones into shared module
+				//expose some id such as mainWindow as usable singleton alternatives
+				//reduce access to sibling or parent modules. put info into a global sharing object, then access from there
+			//In turn, timeline is no longer on every page. 
+			//Intermodule communications: if one tab change stuff, the other tab should know. 
+			//a default module: module manager, that make user able to select modules using file dialog
+			//internationalization for custom modules. custom translate function etc.
+			//global signals and events, ex. when things are modified, all browsers will be updated.
+			//make saving possible for custom modules
+
+			
+		/*
+			issues:
+				do task for ... min in ... time interval
+				do any of the exercise tasks for ... min in ... time interval
+				complete sequence of tasks (specify time needed for each) before deadline
+				complete all tasks in list (specify time needed for each) before deadline
+				write two essays. each essay follow certain procedure.
+				require to click-confirm certain reminder in interval.
+				customize sessions.
+				doctor's appointment
+				
+		*/
+				
+		//use an ID system for identifying objects
+		
+		//update to Qt 5.7, for: New layout, qt quick controls 2(new paradigm), New core features, styles and more.
+		
+		/*
+		 * 
+		FOLLOW TOP TO DOWN
+		
+		data structure:
+			
+			try: (maybe in Qt 5.7)
+				!!!!!!!!!TODO SHITS IN SRC FILE
+				Check porting and migration guide 
+				http://doc.qt.io/qt-5/qtquickcontrols2-index.html
+				~modify ID system. add 0 as first ID (represent free time).
+				~use state change to store sessions (one array, each storing pair<time, action pointer>)
+				//for object in [action, plan]:
+					//able to pass in param Object* when {create object}, to make a copy (with new ID!)
+				check raise on window, and always on top
+				learn flickable, redo text editor
+				~c++ vector or qvector made available for qml to access, or other alternative to loop through c++ vector
+				ui: make reusable components whenever possible, ex. color editor etc.
+				hashing
+				prevent inactive modules from receiving visual events and resize themselves. maybe remove from stage?
+				ensure object ownership
+				folders cannot have the same name. also, folder name requirement using stripping and regex
+				make editors methods shared
+				streaming: have max memory size, qml request an interval, cpp load all needed entries, delete entries outside of interval (from both ends) if memory size overload
+				optimized for access, not modification.
+				balanced on memory and speed.
+				any cached data structure is dynamically updated when object is inserted or modified.
+				make sure real-time loading time is less than O(N) for N = number of item. (unlike current system)
+				consider making tabview in selector to allow searcher. This way, timeline can access library browser as well.
+				use the buffered-object pool on finder and selector
+				later optimize timeline by changing container, using streaming techniques to reduce average runtime capacity
+				mimic X3 script system.
+				
+			bugs:
+				sizing issue for basically anything that is using default width/height/Layout.width/height on Win7
+				font not being the same on win7, and other system dependent graphics issue
+				new Windows 10 update made it so that if lid is closed, openGl crashes.
+				shortcut keys like enter not working ex drawing sessions.
+				//timeline animation stutter if used with mouse moving events and near 24:00. find another way or fix this
+				there may be glitches due to not all times are limited precision to minutes.
+				set camera on timeline with animation sometimes stop before reaching dest.
+				
+			optimizations:
+				check memory usage
+				findout why the autodraw at each minute takes twice as long
+				try re-using components like finder, color picker, calendar etc. (make a singleton type that launches them).
+					or try window cascade system, switching visual parent to a dummy window so there is only ever a stack of windows.
+				have a list of all instances (in engine), sorted by end-time of last occurrence (repeating ones will be far down the list).
+					dynamically binary searched and repositioned when any instance is modified.
+					the dynamic modification is implemented in the ctor and dtor and set function of instances.
+					OR simply delete mission (or only attached ones?) instance if it falls behind buffer range.
+					OR use another vector to store missions that are behind. they are re-examined when edited, and the not-behind ones are examined when generating occurrence.
+				maybe use qobject setProperty() to more efficiently load.
+				in checkConditions, use a month cache by storing total action completion info for each month, to quickly move through markers in case of big gap
+					this cache is generated if not exist. modifying a month will delete the cache for that month.
+					extend max instance range to 100 years.
+					sync changes with autoplan function
+				lazy loading and dynamic deletion of object, improving timeline object pool system by not re-initiating objects, but deleting unused ones.
+				asynchronous loading or executing of functions. also lazy loading and incubating of component instance asynchronously
+				use listview-concept to optimize simplelist
+					use a dequeue and delete objects on the fly
+			
+			basic features:
+				simple modularization
+				data structure
+				creating, editing, and storing items
+				design and implement basic visualization
+				active draw
+				plan of 1 action
+				mission of one continuous interval
+				session add/edit, auto edit.
+				
+			advanced features:
+				styling (maybe use singleton module type), and better UI design
+				week view
+				advanced modularization
+				advanced AI
+				shortcut system
+				complex plan and mission repeat
+				week view and month view
+				other modules
+				other platforms
+				tutorial
+				reward systems, character, stats, skills, skins
+				remove or finish added-but-place-holding features
+			
+			timeline:
+				harddrive:
+					stores marker info in year folder each containing 12 months, each month in a single file.
+				cpp:
+					signal is dispatched when any change is made to the database, such as editing, deleting, moving, creating (all qml call-able setters must dispatch this event(ex. save function), including Engine methods creating/deleting and manipulating timeline)
+					each setter also emit its own changed signals
+					some of these new features may require engine to expose static current pointer.
+					when objects are deleted, auto nullify(set id to -1 using set marker action(to merge)) actions on all timeline(all in access interval.), and force save(they are all dirty) immediately, then dispatch change event.
+					structure:
+						QVector< QVector<TimelineMarker*>* > timeline: 
+							store markers, each month in a different vector
+							month are sorted, not continuous(each month must contain at least one marker.
+							markers are sorted, not continuous
+							does not have first null marker
+						QMap<Int, bool> monthModified:
+							key: absolute month number(year*12+month), value: true. Every entry means a month is dirty and needs to be saved.
+						QDateTime timelineLowerBound, timelineUpperBound.
+					valid timeline methods:
+						public:
+							(engine destructor):
+								delete all markers and months from heap by going through each month
+							(utils function in engine) Int binarySearchMonth(date);
+							(utils function in engine) Int binarySearchMarker(month, date);
+							void load():
+								only called once on application start.
+								setup access interval: lower bound = max(MAX_LOADED_YEARS before maximum planning distance, earliest possible year)(unchanging); upper bound = maximum planning distance from now(changing)
+								load all data in access interval from drive (only if exist) into timeline creating markers and months on the heap (ownership = cpp).
+								load invalid action id as nullptr, do not load marker with invalid time info (eg. out of month, not in sorted order)
+								if a month has no file on drive, do not load.
+							void save():
+								happens when: before timeline unloaded(//requesting new interval,closing application), periodically, eg. every minute(timer per second. once new miunte is reached, save), requested by user from menu.
+								for all months that are dirty(check dirty map): save it from timeline into drive.
+								(remember to save in double digit like 01, 02, 11 for month number)
+								if a dirty month has no info in memory but has a file, delete file on drive.
+								clear dirty map
+							TimelineMarker* getMarker(date):
+								binary search month(then marker) in valid interval that is no later than date
+								if search return before first month or first marker of first month, return null.
+								if search return before first marker of non-first month, return last marker of previous month
+							void deleteMarker(marker):
+								binary search and remove(from vector)+delete(from heap) marker
+								if month now has size 0, remove and delete month (mark dirty as nullptr).
+								mark date month dirty
+							TimelineMarker* createMarker(date, Action*):
+								binary search month, if no month existed, create month on heap.
+								binary search in month, create marker on heap (set cpp ownership).
+								if marker already exist at date, simply use setMarkerAction.
+								mark date month dirty
+							void moveMarker(marker, newDate):
+								createMarker([marker.info])
+								deleteMarker(marker)
+							void setMarkerAction(marker, Action*):
+								set action of marker
+								mark date month dirty
+							void refresh():
+								called on load?, every minute(use qml), also when any change is made to timeline or database?
+								update upper access bound.
+								maybe have AI planning over here.
+				qml:
+					have a timer every sec, then each event check if a minute has passed. used to call stuff.
+					since currentdatetime is now pretending to be UTC, use epoch time stamp(javascript date.getTime()) to find cursor position
+					store about 5 days of marker(object pool) visualization in each timeline, by accessing cpp. 
+						camera control:
+							change time stamp of top of frame, time of bottom of frame - according to camera pos and zoom.
+							limit zoom.
+							viewing top and bottom is clamped to access interval.
+							zooming should only see at most 3-4 days.
+							if any of top or bottom is out of 5 day range: call refresh();
+							else call reposition();
+						createSessionView(marker):
+							do the object pool thingy and create object when not enough.	
+							assign markers and other properties.
+							nullptr action means free block. make a block regardless (but do not load its action), and make invisible.
+							null marker (start and end of access interval) also means free bloc, and invisible.
+							no block element should use binding. values are determined conventionally.
+								however binding can be used for geometry only, for things related to height of current block.
+							make a block time (separate from marker time) for each block clamped to be a bit out of 5 day range..
+							enabled is bound to visible.
+						refresh(): request markers and set property of blocks
+							called on any timeline change, entering current module, out of 5 day loaded bound;
+							setup new 5 day range (centered at average of top and bottom time) and the "a bit out of" part;
+							set all block in pool to invisible.
+							numBlock = 0
+							find first marker before 5 day range (getMarker using starting time of range)
+							call createSessionView(marker);
+							numBlock++;
+							while true:
+								getNextMarker;
+								call createSessionView(marker);
+								numBlock++;
+								break if null marker or marker bigger than 5 day range.
+							block time of first and last block are set to a bit before / after 5 day range to mean infinity.
+							the block after 5 day is set to invisible.
+							call reposition();
+						reposition(): set position and height of all blocks on display
+							input: time stamp of top of frame, time stamp of bottom of frame.
+							for each block on display (using numBlocks):
+								top pos of block = map(time stamp of block time, time stamp of top time, time stamp of bottom time, 0, height of frame).
+								if (cur block is not first) bottom pos of prev block = top pos of curren block.
+								call reposition() of block to do other stuff such as text hiding.
+					clamp access/browse range to cpp access interval. (can use binding)
+					finish implementing calling of all cpp functions
+				
+			//missions:
+				//treat each plan as multi-objective (for forward compatibility) with vector.
+				//each plan has its own function of creating new objective and instance etc.
+					//implement create and delete of obj / ins in plans.
+					//property default to now and next 1 hour with no repeat.
+					//set objective and instance ownership to cpp
+					//implement plan saving set / get params
+					//make finder show specify title. if not specified, use default qsTr("Search")
+					//savePlan function in engine will trigger plan to sort it's 2 vectors.
+				//mission edit:
+					//saveplan after manual pressing, and editing / adding / deleting -any objective / instance
+					//have refresh function take place after saveplan (for both actions of objective and instance) and during loading
+					//for objective and instance, each have separate edit window which edits UI element values, and saves to cpp side only when hitting save.
+					//have the editor save button SPECIFICALLY inside name and note section.
+					//top: objectives.
+						//try dynamically adding stuff to columnlayout.
+						//creating: if user select null action, do not continue. if non null, create with that action, then launch edit window
+						//right now just single action objective, specifying amount.
+						//edit length in a small length selection module (create in lpp utils) that ask for 3 input limited text fields of D, H, S. cap (not throw error) length spec to 100 years
+						//have option to delete objective in objectiveItem.
+						//objective editor window action button can click to select in library. but ask for save first.
+					//bottom: instances.
+						//make the session selector in timeline edit into a util module and use here.
+						//a list of instances, each containing:
+							//start time, 
+							//[length / endTime)(maybe both are editable and in relation to each other), (limite length spec to 100 years)
+							//repeat mode[none, time(every x amount of time, date(every x years or every x months)]. implement with multiple group box indexed with radiobutton with exclusive groups.
+							//repeat param
+							//forever (until earlier than start time) / repeat until (inclusive)
+			
+			hard drive stores:
+				for object in [action, plan]:
+					using OS file structure, store folders, subfolders, and objects(using "action-ID.txt" as file name)
+							
+			class:
+				QObjectVector:
+					provide a vector-like class (with an actual QVector as private property)
+					stores QObject*
+					allows Qml side to:
+						read element, size
+						listen to size changed event
+						sort
+					act as folder of action and stuff.
+					use static_cast(if known to not fail) or dynamic_cast(can check null) to find element of correct type
+			
+			engine stores
+				for object in [action, plan]:
+					store all object on the heap. use a root QObjectVector to store all object and sub folders(delete children when destroyed, i.e. main storage management)
+					store all object again (not main memory management) in a vector storing pointer. sorted by ID.	
+					~store all object ID on a vector sorted by value. use this vector to obtain next available ID, and to binary search.
+				keep a timeline vector that stores timeline marker pointer <time, action pointer>, sorted by time. (streamed to contain parts)
+			each action stores
+				~ID
+				//~a vector of session pointers (value on heap), sorted by starting time. (maybe store on hard drive and stream)
+				parent folder?
+				tags?
+			each session stores
+				~pointer to parent action.
+				//maybe old values? for edit redo
+			each plan stores 
+				~ID
+				some structure to hold plan data (pointer to actions to use, etc)
+				~a vector of mission pointers (value on heap), sorted by ?. (does not generate multiple occurrence for repeat. calculate like current time manager.)
+				parent folder?
+				tags?
+			each mission stores
+				~pointer to parent plan.
+				a time interval
+				
+			on qml side:
+				stream a list of session visualizations (relevant to view area) sorted by starting time for display
+				make list of visualizations for editing, then write to cpp side for saving
+				load data into ui, edit, then save using edited data in ui(do not modify object when editing. modify ui only)
+				
+			cpp side: do calculation, data structure, file i/o/streaming
+			qml side: do editing(may create cache on qml side), display, select file/folder
+				
+		*/
+			
+		//action
+			//certain things you can do.
+			//have folders to categorize actions, using OS file structure.
+			//name displayed as full path, with each folder name having own color.
+			//properties:
+				//color. can also choose to use color of parent folder.
+				//name and note: for additional info, ex.
+				//rewards, contribution, levelling etc. can disable each.
+		
+		//mission plan: a checkable condition. renamed OBJECTIVE
+			//!!!delete actions when the action is deleted in library.
+			//EXPERIMENTAL: use tags to categorize plans. or simply categorize by actions used.
+			//EXPERIMENTAL: temporary: if true, mission cannot repeat, has no name, one action only, and gets destroyed after completion (for temp & daily uses)
+				//have shortcut to quick add this kind
+			//can contains actions to be carried out (e.g. complete 1 hour of reading). 
+			//name and note: for additional info, ex.
+			//color. can also be color of parent folder
+			//completion mode: what counts as completing a certain occurrence(mission) of this plan
+				//displayed clearly using icons.
+				//optional: allow click confirm (ex. time is just estimate. click to confirm so mission is done even before time requirement met. used for project subtasks.)
+				//objectives:
+					//a list of objective, each objective can be (visualize task by a bold [type] prefix in button text):
+						//reminder (!!! implement with a fact in mind that things may get big like 1000+ reminders. maybe use a big shitty chunk of text with specific char used as mark?):
+							//reminder, a line of text, does not require any amount to be done, but require a simple click to confirm and deactivate. will be listed in active reminders & upcoming reminders.
+							//enable search completion for this
+							//store this separately as a timeline, marking confirmation time of each reminder as a string.
+						//action: 
+							//complete of some length
+							//also specify if unbreakable. if true, must be completed in one session.
+							//also specity if device free. will detect user inputs and nullify reward gain for short period of time.
+							//EXPERIMENTAL: also specify a minimum amount. all planning use the regular amount, and only fall lower if necessary, and alarm if lower than this minimum.
+						//folder (!!! when delete folder, should also check for plans that have this folder as objective):
+							//specify what to do with all actions inside that folder . eg. complete any, complete all
+							//can specify whether to recursively check for actions
+						//EXPERIMENTAL: progress: 
+							//a merge between reminder and action objective. 
+							//maybe progress is independent each, meaning one progress does not count to multiple. must select to give progress (record progress menu).
+								//if so, record progress in instance, and do not allow overlap in occurrences of the same instance.
+									//or maybe record in occurrence, so that past occurrence will have its own.
+									//or record in timeline-like things
+								//maybe allow editing of progress in timeline module. if so, refresh after edit.
+							//completion can be manually set, not planned amount ex recite 3000 words and confirm number everyday, 
+							//also eating no matter how long it takes, counts as one). 
+							//prompt the user to enter estimated time needed, and then AI will try calculated later dynamically (in timeframe, time/totalTime = progress/totalProgress).
+							//each distinct progress objective is assigned a progress listener ID which will graduatly estimate time.
+						//EXPERIMENTAL: mission (!!! when delete plan, should also check for plans that have this plan as objective):
+							//complete objective of another mission, making logic chainable.
+					//the relations between these objectives
+						//AND / all: complete all objectives.
+						//OR / any: complete any of the objectives.
+						//EXPERIMENTAL: sequence: complete them in order, each with set length.
+						//EXPERIMENTAL: can also specify breaks in between.
+						//custom/script/flowchart: (to be added)
+			//drag and drop etc the objective / instances to arrange? or simply sort them.
+			//missions: occurrence of plan. renamed INSTANCE
+				//completing the mission will reward based on reward of actions in mission (do similar for progress and reminders).
+				//each require the plan to be done once (evaluated true) in a set interval.
+				//interval must check for start of action contribution i.e that start of the 1 hour of eating must be inside range. if sequential, next part only start to count after first one completed.
+				//repeat: a repeat pattern for this mission, copying requirement and placing future start time with respect to the first one.
+					//easiest: every x days/minutes/hours, every month with x date, every year with x date.
+					//has an end date (inclusive), if earlier than start, that means forever.
+					//complex: for each certain day of the week like mon, tue, sat.
+					//EXPERIMENTAL: total control: use designer. 
+				//EXPERIMENTAL: enabled toggle?
+				//EXPERIMENTAL independent:
+					//if true: then each instance will create separate objectives, any actions completed will only be counted towards one of them, until it is done.
+						//automatically label ex. Essay1 Essay2
+					//if false: if 2 missions are identical: completing the plan once will complete both missions, also goes across plan.
+				//currently, conflict check and auto planning will treat mission as independent. however completion check will treat mission as shared.
+				//bonus: various things to modify reward
+					//early bonus:
+						//for each minute in session, the earlier it is in time interval scope, the higher the reward.
+					//EXPERIMENTAL continuous bonus:
+						//the longer you complete without stopping, the more the reward.
+					//EXPERIMENTAL reinforcement bonus:
+						//simulate skill learning: the more you do, the better you get (also simulate a stat).
+				//start time: used by conditions
+				//time interval: requirement specifying when mission should be carried out.
+					//simplest: just a length of time (can edit end time in regards to start time.
+					//EXPERIMENTAL conditional: ex. when you leave, must turn off light. like a separate additional condition to other plans
+					//EXPERIMENTAL refill: ex. must cut hair in 3 month after last cutting hair.
+					//EXPERIMENTAL until next: always extend to next start time. useful for monthly / yearly things
+					//EXPERIMENTAL: use designer to specify complex interval: any ranges, not necessarily continuous.
+					//example usage:
+						//appointments at fixed time interval, single interval starting at starting date and time with length equal to amount to be done. (replace standard schedule)
+						//eat between 5 - 8 pm, eat for 1 hour, repeat the mission for each day (replaces task goal system) 
+						//time interval between now and due date (replaces project system)
+						//time interval between now and infinity (no bonus reward. act as weak mission)
+				//sessions: occurrences of action, describing when the action should be carried out. should fit inside missions.
+					//cannot be repeated. once generated, cache in hard drive.
+					//session time auto adjusted by AI for a mission that is larger time interval than required amount.
+						//update when any change is made to the timeline. that includes every minute of auto draw.
+					//not count as done unless confirmed or used active draw.
+					//display action color. also display the color of mission that this action is currently contributing to.
+					//during Engine.autoplan:
+						//precautions:
+							//do some caching in the months for completion total, maybe BIT or seg tree. use this to check if any interval is already done and to be ignored, also useful in reward system.
+						//adding "one task many mission" feature in the conflict check will elevate the problem to NP-complete.
+							//however, simply using that feature to check for mission completion will work. just that auto planning won't go for it, and will change once any task is already done in the past.
+							//in the future, try making a practical algo that solves for the NP-complete problem.
+						//if user decided to edit / add session, call checkConditions():
+							//ideas:
+								//GA, backprop equivalent
+								//checking schedule equivalence, such as what can the greedy schedule shift into a new similar one randomly and still maintain mission completeness
+								//by default, shift schedule to be at center of mission interval.
+							//AI will check if condition resolvable by changing unedited sessions 
+								//check obvious cases first (total time requirements). then other ones (e.x. min session/break length)
+								//first change the ones that are not recently edited
+								//if not (or, if custom/script conditions are involved), don't save, go back to edit mode.
+							//the positioning of sessions should resemble past configuration by user. also make AI learn from user's actions.
+					
+			
+		//EXPERIMENTAL: mission plan designer:
+			//flow chart / graph system, with custom masking and custom repeat function
+			//edit plan easily by editing sub actions and properties using standard editor UI techniques (drag drop etc).
+			//node system gives flexible control over intervals. 
+				//a mission's condition can only have 1 interval, however intervals can be combined using AND OR XOR NOT operator nodes to perform logic.
+				//repeat nodes make copies of attached nodes. if attached to mission, it repeats the requirement. If attached to time interval, it repeat possible interval where amount can be completed in, making it possibly have no deadline.
+				//lots of different nodes for time interval, ex. until end of month, repeat to every month with same date, define arrangement for 1 week and repeat the whole set every week.
+				//mask nodes stops the repeat of nodes for some time.
+			//have nodes that are global, as presets (e.g. repeat behaviour) and can be used by all missions of all tasks.
+				
+		//add knowledge acquisition into a quest
+			//quest list can be used to select active task (passive draw)
+			//display currently planned task as "quest" with time limit. 
+		//task contains: usefulness, and potential. high usefulness means it *should* be done. high potential means it will more likely be done by the user without extra motivation.
+			//task with high usefulness and low potential will have more reward and priority and forced regulation
+		//long term notifications like vaccine chicken pox, grad shcool admission prep
+		//each item etc can have multiple label / parent / category, which can be accessed by when needed.
+		//project procedures can be repeated (create new instance of the same subtasks set)
+		//define task/project to be a class. can create instance of it to be completed(schedule). project can be in the form of graph, parallel children or sequential dependencies. 
+		//create task template: define reward / consumption and schedule preference of task. select template to start with when creating task. also, create schedule template.
+		
+		//schedule
+			//definition
+				/*properties: 
+					(date obj) start time, end time
+					(repeat mode) repeat mode(none, #of day, per # week (selecting week days in each week), per # month, per # year, custom(script))
+					(bool) is mask
+					(string) name, notes
+				*/
+				/*methods:
+					
+				*/
+			//are quests
+			//does not allow a schedule to repeat and cover itself.
+			//masking schedules for a task: at some time, disable all schedule with lower priority.
+			//checking schedule conflict: O(N) loop through all other schedule and check using math
+			//a schedule is always tentative (none rigid), just draw on top of it to change. select "no task" to do erase.
+			//very flexible schedule in which you can overlap, overwrite, display as parallel or auto adjust
+			//for events that have happened in the past, mark as unspecified, then must use manual or auto draw to specify. no longer under control of planned quests.
+			//add misc subtasks to task, like com upstair to misc, acting as detailed variants to one task, and is schedule specific (like a schedule name)
+			//note for specific schedule, or for day
+			//use lua script for making custom functions like Day 1 Day 2 schedule, as event call backs, as fuzzy condition (ex some schedule to be completed this weekend) and much more.
+			//check the ones finished, otherwise move to tmr
+			//static vs dynamic schedules. have a separate list of unordered dynamic schedules (maybe drag drop to order priority)
+				//static: fixed / known exact time interval.
+				//dynamic: unknown exact time, but known tentative deadline (e.x. today) or completion order
+			//able to add a special type of schedule that is whole-day and display separately like a today's note
+			//temp list of misc to do
+			
+		//dynamic schedules
+			//maybe separate the 'planned' and the ’actually happened' sections. the 'now' pointer will separate them.
+			//able to add estimated daily homework thing. everyday, specify actual deadline and work amount, but can also have "estimated" so long term free time can be calculated.
+		
+		//rewards
+			//extend reward to make suggestions about which action is most valuable to do. just like the opportunity cost idea in economics
+			//experimental:
+				to reflect user progression in user decision, lets make some things to be "approved" and some to be "disapproved", and only user progression can unlock more approved actions. Also, CS:GO shits.
+				approval may depend on item activated, or stats or attributes
+				so there will be random items that approve 1 or more recreational actions for certain time since activated. these can be items in crates.
+				also items that boost stats.
+			//reward claiming:
+				//reward is only gained into drive if clicked claim, which will calculate all rewards of actions in buffer time frame.
+				//buffer time frame is from max(last claming time, limit of 10 days etc) to now.
+				//only able to claim if timeframe size > 0
+				//user can modify all they want before claming,  and will display a temporary calculation of buffer reward (may not be accurate cuz of bonus and stuff);
+				//also use the claiming for progress objective, by manually specifing the progress done in buffer time for each !!!occurrence!!! requiring this objective (show requirements at the same time)
+				//only claim missions that: end time already before now, and is completed.
+				//extend updateOccurrences, checkConditions, checkConflicts range to include buffer time frame, and specially display missions in the past that aren't claimed.
+				//how the current buffer reward info is displayed would be similar to the occurrences one, by refreshing explicitly
+				//display claimed rewards (stats and attributes), unclaimed rewards, planned rewards (maybe for a day only)
+				//let user confirm before claiming. warn the user if there is AI drawn sessions in unclaimed buffer range, when claiming reward.
+				//or maybe: ignore auto drawn sessions when dealing with reward? or simply delete auto drawn sessions if passed now?
+			//main stuff for an rpg game:
+				//stats (attributes)
+				//skills (knowledge)
+				//items (???supply drop???)
+				//currency (stats?)
+				//missions (missions with reward)
+				//exploration, combat etc (task managing and timeline scheduling)
+			//maybe simply tally reward per day and thats it. editing will only change per day reward.
+			//maybe let user confirm the planned sessions if app closed and time passed.
+			//see missions section
+			//completing the mission will reward based on reward of actions in mission (do similar for progress and reminders).
+				//be careful as people may create mission for past events.
+				//maybe the longer time between [last editing mission] and [mission completion], the more the reward? like planning early will get you more reward.
+				//maybe also multiply the amount of punishment like games decreasing stats?
+			//try best to accompany modifying of tasks. i.e. how does reward change when you delete an action from the past.
+				//maybe removing cause all rewards in month to recalc? or some range like that? make a max causality range, anything further than that range cannot affect reward earned here. use that to limit recalc interval.
+			//global redundancy bonus: the more room for free-time just-in-case, the more bunus multiplier. 
+			//try to display as much actual-reward as possible, eg: more redundancy is better for ... actual reasons
+			//supply drop. limited time item. random generated items, plus artificial selection DNA to make user make new skin. 
+			//Stats (can be negative) plus user made stats: [vitality, strength, intelligence, dexterity, productivity, happiness, energy, etc] 
+			//Partical effect etc on stats  
+			//daily achievements. Display what you did per day in a game way.  
+				//EXPERIMENTAL: display what you did vs what you planned. 
+			//or simply display what you have done today and what you have done in total. categorize them.
+			//Violation of mission will result in punishment ? 	
+			//qualitative motivational reward
+			//quantitative reward gives stats boost or consumes stats faster.
+			//combine progression (skill in knowledge, attributes, OTHER ONES?) and chance (supply drop, stat, limited time bonus). maybe can be used to unlock skin or item etc for some days.
+			//combine temporary and permanent.
+			//attributes: not-decreasing stats, that can be tallied to show total progression (eg. cooking skill level 10)
+				//maybe give bonus to something? maybe unlock something?
+			//EXPERIMENTAL give xp to each action, signifying time done with it. can also combine actions to merge the xp.
+				//leveling of action, or connect action to attribute, then any action time will be counted to attribute xp, in which attribute level will be displayed. (ex. 1 lv = 10 hours)
+				//user specify attributes, and each action have like 10 points that can be added to attributes, ex. 10 points all to 1 attribute, or some to 1 attribute some to another. less points mean less contribution to that attribute.
+				//also, action itself can level up. as it level up, it opens up more skill point that can be connected to attributes.
+					//leveling up gets slower on higher level, this makes you do other actions.
+				//think about stats vs attributes. maybe stats is temporary + auto consume?
+			//maybe stats give bonus to something? maybe able to use to purchase something?
+			//distribution reward: encourage people to try for more actions. 
+			//balance reward: do not do one thing only (eg. in a day)
+			//inhibition: reduce action benefit after going for too long
+			//stats automatically consumed.
+			//also keep track of total stat output.
+			//time as currency / energy to buy task
+			//maybe use customized stats and reward (user create), 
+			//the spontaineity or potential determines reward. low potential has high reward (energy input).
+			//assign benefit (quantitative & qualitative) to tasks
+			//continuous completion reward, for ex continued sleeping early
+			//make time as a currency, make RPG like fx that display when u gain some time etc. 
+			//maybe do study etc task to gain points used to buy entertainment events.
+			//custom motivation triggering low level hardware acceleration / reward system. ALWAYS remind about these goals.
+			//specify reward of stuff in note form, like vacuum will get "cleaner room". can also specify in preset points form. e.x. (intelligence, agility)
+		//EXPERIMENTAL:
+			//mimic class sytem of cod, you assemble your class of primary task etc, or of other items.
+			//moments that people like:
+				//buying things
+				//opening crates
+				//skins
+				//leveling up
+				//getting money
+				//increasing char attributes
+				//getting items
+				//completing missions
+				//pokemon things, lol things, cs:go things, diablo 2 things, skyrim things, borderland things, TF2 things, X3 things
+				//making cod classes
+				
+		//forced regulation
+			//popup, sound, raise, device lock, shutdown
+			//set task to be requiring device, and every 1 hr of continuously doing it, try to lock device, detect user movement, if no movement for 5 min, give reward.
+			//have meter fill up to max at 1 hour, must cilck and stand up to walk (com locked) to clear.
+			//set task to be not requiring device. then if doing the task, disable/lock device with mouse lock etc. 
+			//set window focus when giving notifications.
+			//important task notification like 2 days before
+			//sleep and wakeup should be about the same time each day.
+			//detect user movement to see if user followed the unplug time.
+			
+		//statistics:
+			//try adding tags to actions and view tag stats.
+			//maybe month view to see overview of day to day changes and trend.
+			//graph of time done for each day in a time graph
+			//timeline horizontal graph showing overview each day in a simple fasion, can zoom in out etc.
+			//folder:
+				//total number of actions plans
+				//sum of statis of actions / plans, percentage and amount of day used in children actions graph.
+				//rank these in a list to display most done [day week] action mission etc.
+				//upcoming and past session using actions in folder
+			//action:
+				//percentage and total time spent on things, overtime etc.
+				//average time done per [day, week etc] for each task.
+				//longest streak (did it everyday) for each task
+				//upcoming plan using this action (click to go to)
+				//upcoming and past session using this action (click to go to on timeline)
+				//total reward contribution, XP etc.
+				//favorite timeofday that this action is done in.
+			//plan:
+				//percentage and total time spent on things, overtime etc.
+				//average time done per [day, week etc] for each task.
+				//longest (do it everyday) for each task
+				//upcoming occurrence (click to go to on timeline)
+				//total reward contribution
+				//number of times completed, and related statistics
+				
+		//Styling
+			//use a global singleton type. UI properties bind to it.
+			//accent color
+			//random color for binding, singleton types can set to random by binding.
+				//give sets, such as 
+			//use one single qml file that extends the singleton type and override some properties (permits binding to random color). also a function to reset all
+			//UI basics, font, font size, text color, front color, back color, accent color, spacing, positioning
+		
+		//AI
+			//auto suggest categorizing task and knowledge
+			//continuously update GA generated dynamic schedule for current free time sessions as static ones change.
+				//some features?:
+					//spread out, not repeating things over and over again
+					//mimic past human planning
+					//maximize bonus, rewards, and stats.
+					//not changing too many tasks per day, like the current time mgr auto schedule.
+					//balanced daily stuff, 
+					//plan according to calculated task duration from progress.
+			//estimate task duration by looking at past time spent. for progress objectives.
+			//automatically use AI to calculate spontaneity (how much do i want to do a task).
+			//suggest potential alarm (orange, not red) before it actually occurs (e.x. when you keep procrastinating to last minute)
+				//use machine learning, or simple linear regression.
+			
+			
+		/*
+		algorithm:
+			try:
+				when a schedule is changed, check displaced amount (which schedule is being covered), and free amount (which part is currently free time)
+				then do some shit.
+		*/
+		
+	//graph structure knowledge and skill library management
+		//a declarative language for knowledge representation
+		//potential real-time collaboration of knowledge base, like outlook / google doc
+		//maybe allow rich-text editing
+		//define things similar to c++ function definition. 
+			//or like you wanna add stuff to database you just write a file (fragments of newly added knowledge), and it will be interpreted and added.
+			//it can be in multiple places, but as long as they refer to the same point, they will appear after organization.
+			//when you write it, give completion or briefing of the actualy collective topic info thats written elsewhere.
+			//can also add a "see also", in which the other side will also be able to redirect here.
+		//keywords use in-text detection:
+			// "- " at start of line = new point, "@ " = todo, "? " = tba, ...
+		//can define alias for a knowledge point, such as multiply = time
+		//connect knowledge with actions / plans or better yet, use them as notes.
+		//mimic qml for modular programming, reference other knowledge points in other ones.
+		//warn when a knowledge is not connected to the root node,which meansd cannot be referenced by tracing dfs
+		//dependency bindings. When a dependency is updated, bound notes or knowledge is marked to be updated. Such as achievement list, tools i know
+		//connection is key, need to understand that all knowledge are connected ex science and math, reward for connection.(Add to model as well) 
+		//brain stormer: use AI to bring idea in
+		//assign benefit (quantitative & qualitative) to skills
+		//require to have indenting structure, which will be auto organized later.
+		//skill reinforcement (review learning) can increase skill point. without review skillpoint decrease with time, and benefit will be lost
+		//presistent reminders, such as !!!delete everything on heap!!!. have a section for these. maybe integrate in time manager.
+		//type of graph group
+			//general knowledge (can be used multiple times)
+			//project specific (specialized / specific knowledge for (usually) temporary use. e.x. feature of a new software)
+				//maybe integrate into quest system as well, since its checklist
+			//applied writing (code completion brings related knowledge entry using AI)
+		//use examples to teach
+		//information reorganization: make bunch of stuff more organized. re-tag multiple entries etc.
+		//creating new entry: write dependency & category of an entry, then it will be auto added to graph
+		//ex: defining entropy's property requires defining entropy first
+		//auto arrange entries, even only 1 line.
+		//able to add quick contextual elaboration of text / term, like a small reference, that displays when mouse over etc or if enabled, always displayed in bracket after the term
+			//actual link to another entry can also be displayed briefly.
+		//use ANN and GA to predict knowledge's next words
+		//memoization idea: existing knowledge can be reused just as reference.
+		//code completion (adding link/prerequisite of entry; word completion from past typing; custom define shortcuts)
+			//use new qml thing with just a window border. set visible true / false.
+			//mimic notepad++ (for every word, including a-b-c, b-c, c)
+			//maybe use sougou-like selection, use number-keys to auto select from selection box, +/- to flip page
+		//use AI to automatically categorize similar entries. and when writing, display related entries.
+		//types of entry: definition/relation/fact/observation - passive skills, method(how to do things) - active skills. 
+			//ex: qdatetime does not count leap second; qdatetime month 1 based, while javascript month 0 based. - passive skills
+			//how to use qdatetime - active skills.
+		//for segment in entries: + relation, + because, + dependency(segment requires knowledge from another entry)
+		//dependency helper, ex finding requirements of software and things update
+		//add the "how to make modular" into as one of knowledge
+		//instead of property being stored value (in computer), knowledge consists of also properties being connection or correlation (e.x., equations, “trees has roots”), which is reversible and might not have meanings.
+		//add tag to anything. and when searching the tag, it will come up.
+		//(also, knowledge needed when making new projects)
+		//set some stuff to be constantly updated (e.x. achievement list, tools i know list). give reward when updating. 
+		//for managing data, a link can be to text editable with embedded editor, or file on disk or online, or just a note telling user where it is.
+		//link system. Add a link with extra info for any selected text, and create dependency graph (can have loop)
+			//basically adding hyperlink to a site
+			//warn for dependency loop
+		//can add "tba" or "todo" keyword or marker, and have a list that track them, link to quest list in time manager
+		//link based. can write a custom link to somewhere. as long as there exist viable link to knowledge, its fine. display whether a link is weak or strong.
+		//can present a knowledge graph, using traversal to maximize the relavence of knowledge displayed next.
+	//graph structure data manager, unify things using one single structure.
+		//(my work, my plan(to do, to learn), external tools(plus useful data like entertainment), external knowledge)
+		//for managing data, a link can be to text editable with embedded editor, or file on disk or online, or just a note telling user where it is.
+		//organize notes like these into less separate places
+		//able to disguise data as (e.x. dll file), or maybe encryption
+		//one click sync
+		//also, external link with various type, ex. backup contacts on phone.
+	//idea generator
+		//GA, ANN
+	//also maybe app / game creator.
+/*
+ * 
+ * Keep in mind to Make into an modular framework, which can adapt to any backend:
+ *  generic software design: accomodate any circumstances, able to withstand change
+ *  make possible for people to mod, then if mod is good, add to core. also able to mod skin etc.
+	no access to OS specific functions inside framework
+	framework should be abstract, and interface should only be used to access the framework instead of being part of it
+	use conditional compilation
+	use generalized abstraction layer methods, ex. call a func and then that function redirect to specific ones. Same goes for type and var.
+	make abstract class with virtual methods to be overrided. ex. Renderer class. WindowsRenderer extend it, and override methods for platform-specific stuffs.
+	e.x. have a class called Callback, then override, when event happens inside framework(e.x. time updated), call a func to let Qt etc know.
+	*/
+
+//brain like transitions!!!!
+
+//brain storming. can have a list for brainstormed future project idea, and can choose from.
+	
+//bug: 
+//subtask, note, name etc if entered keywork like "---End of Note---" will have fucked up result. 
+//when quick editing, can save unallowed words and cause data corruption
+
+//AI use native extension
+
+//enter name of task to delete
+
+//button to go back or forward 7 days
+
+//random algorithm.
+
+//OPTIMAL algorithm: custom payoff functions. Generalize and then use DP Knapsack and/or Max Flow
+
+//mass conflict check
+
+//hold control to paste
+
+//data summarize: percentage of task time in period of time, each task's total time, each each task's >=50% time interval
+
+//remake so that project time count as spent time not free time
+
+//details: auto backup everyday, just do it, freetime before (date) & freetime for today 4 goals
+
+//sound alert, flashing
+//orange alerts
+//calendar maybe
+//FUCKING OPTIMIZATION. turn static texts into bitmap
+
+//give to parent
