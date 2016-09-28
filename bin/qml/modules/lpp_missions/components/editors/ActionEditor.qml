@@ -212,7 +212,7 @@ Item {
                     id: name
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Enter Mission Name")
+                    placeholderText: qsTr("Enter Action Name")
                     
                     onTextChanged: dirty = true;
                 }
