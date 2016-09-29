@@ -8,6 +8,7 @@ namespace LPP
     QString e_timelineFileName = "/timeline";
     QString e_folderDataFileName = "/folderData";
     QString e_globalSettingsFileName = "/global_settings";
+    QString e_globalStatusFileName = "/global_status";
     QString e_saveFileNameExtension = ".sav";
     QString e_folderFileNamePrefix = "folder_";
     QString e_actionFileNamePrefix = "action_";
@@ -16,6 +17,7 @@ namespace LPP
     Int t_maxFutureYears = 100;
     Int t_maxPlanningDays = 365;
     Int t_maxAutoplanDays = 16;
+    Int t_maxPastDays = 16;
     QString e_timeStringFormat = "yyyy-MM-dd HH:mm";
     QString e_timeStringReadFormat = "yyyy-MM-dd ddd HH:mm";
     QString e_timeStringMinuteFormat = "mm";

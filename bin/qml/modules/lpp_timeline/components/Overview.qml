@@ -50,7 +50,7 @@ Item {
     function refreshOnChange(){
         var occurrences = Engine.occurrences;
         
-        var now = Engine.currentTime();
+        var now = Engine.limitTimePrecision(Engine.currentTime());
         
         var i, occurrence;
         

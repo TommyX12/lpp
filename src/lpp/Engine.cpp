@@ -106,6 +106,10 @@ namespace LPP
         
         this->m_impossibleConditions.deleteChildrenOnDestroy = false;
         
+        this->m_noAutoDelete = false;
+        
+        this->setPastMax(this->m_timeOrigin);
+        
         this->load();
         
         
@@ -712,6 +716,18 @@ namespace LPP
         return this->m_autoplanMax;
     }
     
+    QDateTime Engine::pastMax()
+    {
+        return this->m_globalStatus.m_pastMax;
+    }
+    
+    QDateTime Engine::setPastMax(const QDateTime& time)
+    {
+        this->m_globalStatus.m_pastMax = time;
+        emit this->pastMaxChanged();
+        return this->m_globalStatus.m_pastMax;
+    }
+    
     QDateTime Engine::currentTime()
     {
         QDateTime time = QDateTime::currentDateTime();
@@ -884,6 +900,7 @@ namespace LPP
         qDebug() << "loading...";
                 
         this->loadFromFile(this->savePath + e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
+        this->loadFromFile(this->savePath + e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
                 
         this->loadDirectory(this->savePath + e_rootFolderFileName, &this->m_rootFolder);
         
@@ -950,6 +967,7 @@ namespace LPP
         qDebug() << "saving...";
         
         this->saveToFile(this->savePath, e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
+        this->saveToFile(this->savePath, e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
         
         if (this->m_monthModified.size()){
         
@@ -1249,7 +1267,35 @@ namespace LPP
         this->setPlanningMax(this->currentTime().addDays(t_maxPlanningDays));
         this->setAutoplanMax(this->currentTime().addDays(t_maxAutoplanDays));
         
+        this->setPastMax(std::max(this->pastMax(), this->currentTime().addDays(-t_maxPastDays)));
+        
         this->setTimeChanged();
+        
+        if (!this->m_noAutoDelete){
+            for (Action* action:this->m_actions){
+                if (action != nullptr){
+                    bool modified = false;
+                    for (int i = 0; i < action->plans()->size(); i++){
+                        Plan* plan = static_cast<Plan*>(action->plans()->at(i));
+                        Instance* instance = static_cast<Instance*>(plan->instances()->at(0));
+                        bool needsRemove = false;
+                        if (instance->repeatMode() == "none"){
+                            if (instance->endTime() <= this->pastMax()) needsRemove = true;
+                        } 
+                        else if (!instance->isForever()){
+                            if (instance->repeatUntil().addMSecs(instance->startTime().msecsTo(instance->endTime())) <= this->pastMax()) needsRemove = true;
+                        }
+                        if (needsRemove){
+                            objectDeleted(plan);
+                            action->plans()->remove(i);
+                            i--;
+                            modified = true;
+                        }
+                    }
+                    if (modified) this->saveAction(action);
+                }
+            }
+        }
     }
     
     bool Engine::drawTimelineRange(Action* action, const QDateTime& _start, const QDateTime& _end, bool isAuto)
@@ -1524,7 +1570,7 @@ namespace LPP
     {
         if (this->m_occurrencesChanged){
             //updateOccurrences
-            this->extractAllOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, false);
+            this->extractAllOccurrences(this->pastMax(), this->planningMax(), this->m_occurrences, false);
             
             this->checkConditions(this->m_occurrences);
             
@@ -1533,7 +1579,7 @@ namespace LPP
             this->m_occurrencesChanged = false;
         }
         else if (this->m_timeChanged){
-            this->extractAllOccurrences(Engine::currentTime(), this->planningMax(), this->m_occurrences, true);
+            this->extractAllOccurrences(this->pastMax(), this->planningMax(), this->m_occurrences, true);
             
             this->checkConditions(this->m_occurrences);
             
@@ -1909,6 +1955,10 @@ namespace LPP
             
             //qDebug() << occurrence->plan()->name() << occurrence->minRequirement();
             occurrence->updateProgress();
+            
+            if (occurrence->progressNow() < 1.0f && occurrence->endTime() <= cuttingTime) {
+                occurrence->setImpossible(true);
+            }
             
             if (occurrence->minRequirement()){
                 SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence);

@@ -129,6 +129,8 @@ namespace LPP
             
             Engine::current()->setOccurrencesChanged();
             
+            Engine::current()->objectDeleted(plan);
+            
             this->plans()->remove(plan);
             
             return true;

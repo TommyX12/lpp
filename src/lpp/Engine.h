@@ -16,6 +16,7 @@
 #include "SearchList.h"
 
 #include "GlobalSettings.h"
+#include "GlobalStatus.h"
 
 #include <set>
 
@@ -69,6 +70,10 @@ namespace LPP
         Q_PROPERTY(QDateTime timelineMax READ timelineMax NOTIFY timelineMaxChanged)
         Q_PROPERTY(QDateTime planningMax READ planningMax NOTIFY planningMaxChanged)
         Q_PROPERTY(QDateTime autoplanMax READ autoplanMax NOTIFY autoplanMaxChanged)
+        
+        Q_PROPERTY(bool noAutoDelete MEMBER m_noAutoDelete NOTIFY noAutoDeleteChanged)
+        
+        Q_PROPERTY(QDateTime pastMax READ pastMax NOTIFY pastMaxChanged)
         
         Q_PROPERTY(QObjectVector* occurrences READ occurrences)
                 
@@ -137,6 +142,8 @@ namespace LPP
         QDateTime setPlanningMax(const QDateTime&);
         QDateTime autoplanMax();
         QDateTime setAutoplanMax(const QDateTime&);
+        QDateTime pastMax();
+        QDateTime setPastMax(const QDateTime&);
         
         Q_INVOKABLE QDateTime currentTime();
         Q_INVOKABLE QDateTime dateToTime(Int, Int, Int);
@@ -146,7 +153,7 @@ namespace LPP
         Q_INVOKABLE QString timeToStringRead(const QDateTime&);
         Q_INVOKABLE QString timeToStringReadFull(const QDateTime&);
         Q_INVOKABLE QString minutesToString(Int);
-        QDateTime limitTimePrecision(const QDateTime&);
+        Q_INVOKABLE QDateTime limitTimePrecision(const QDateTime&);
         
         QString encodeMonth(QVector<TimelineMarker*>*);
         QVector<TimelineMarker*>* createMonth(Int, Int);
@@ -212,6 +219,8 @@ namespace LPP
         Folder m_rootFolder;
         
         GlobalSettings m_globalSettings;
+        GlobalStatus m_globalStatus;
+        
         
         QVector<Action*> m_actions;
         Int m_numActions;
@@ -234,6 +243,8 @@ namespace LPP
         
         QObjectVector m_impossibleConditions;
         
+        bool m_noAutoDelete;
+        
     public slots:
         
     signals:
@@ -249,9 +260,12 @@ namespace LPP
         void timelineMaxChanged();
         void planningMaxChanged();
         void autoplanMaxChanged();
+        void pastMaxChanged();
         
         void objectDeleted(QObject*);
         void actionDeleted(Action*);
+        
+        void noAutoDeleteChanged();
     };
 
 }

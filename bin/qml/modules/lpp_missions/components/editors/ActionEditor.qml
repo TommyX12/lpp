@@ -37,6 +37,11 @@ Item {
         refreshExtra();
     }
     
+    onVisibleChanged: {
+        if (visible) Engine.noAutoDelete = true;
+        else Engine.noAutoDelete = false;
+    }
+    
     function save() {
         name.text = name.text.trim();
         

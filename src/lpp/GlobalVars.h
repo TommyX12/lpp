@@ -15,10 +15,12 @@ namespace LPP
     extern QString e_actionFileNamePrefix;
     extern QString e_planFileNamePrefix;
     extern QString e_globalSettingsFileName;
+    extern QString e_globalStatusFileName;
     extern Int t_maxPastYears;
     extern Int t_maxFutureYears;
     extern Int t_maxPlanningDays;
     extern Int t_maxAutoplanDays;
+    extern Int t_maxPastDays;
     extern QString e_timeStringFormat;
     extern QString e_timeStringReadFormat;
     extern QString e_timeStringMinuteFormat;
