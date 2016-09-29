@@ -168,9 +168,20 @@ ColumnLayout {
             Layout.maximumWidth: 65536
             Layout.fillWidth: true
             text: qsTr("Auto Draw")
-            //enabled: !timeline.editing
+            enabled: !timeline.editing
             onClicked: {
                 timeline.autoPlan();
+            }
+        }
+        
+        SimpleButton {
+            Layout.minimumWidth: 50
+            Layout.maximumWidth: 65536
+            Layout.fillWidth: true
+            text: qsTr("New Attached Mission")
+            enabled: !timeline.editing
+            onClicked: {
+                timeline.startNewPlan();
             }
         }
         

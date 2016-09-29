@@ -173,6 +173,16 @@ Item {
                         timelineModule.timeline.startEdit(root.selector.selectedItem);
                     }
                 }
+                
+                Button {
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    text: qsTr("New Attached Mission");
+                    visible: root.selector.selectedItem != null && root.selector.selectedItem.type == "action";
+                    onClicked: {
+                        mainWindow.showModuleDirect(timelineModule);
+                        timelineModule.timeline.startNewPlanEdit(root.selector.selectedItem);
+                    }
+                }
             }
             
             //*

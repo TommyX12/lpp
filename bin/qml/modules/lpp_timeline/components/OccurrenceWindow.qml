@@ -125,8 +125,8 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     text: {
                         if (occurrence == null) return "";
-                        if (occurrence.plan.parentFolder == null) return qsTr("(attached mission)");
                         var note = occurrence.plan.note;
+                        if (occurrence.plan.parentFolder == null) note = occurrence.plan.objectives.at(0).action.note;
                         if (note.length == 0) return qsTr("(none)");
                         note = note.split("\n");
                         if (note.length > 1) note = note[0] + "\n...";

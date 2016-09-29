@@ -28,6 +28,8 @@ ApplicationWindow {
     property Instance instance: plan == null ? null : plan.instances.at(0);
     property Objective objective: plan == null ? null : plan.objectives.at(0);
     
+    property alias lengthSelector: lengthSelector
+    
     function show(_plan){
         window.visible = true;
         plan = _plan;

@@ -146,7 +146,7 @@ namespace LPP
             for (int i = 2; i < params.size(); i += 3){
                 Plan* plan = static_cast<Plan*>(this->createPlan());
                 QString name = params[i-2];
-                plan->name() = name.right(name.length() - 1);
+                plan->setName(name.right(name.length() - 1));
                 static_cast<Objective*>(plan->objectives()->at(0))->setParams(params[i-1]);
                 static_cast<Instance*>(plan->instances()->at(0))->setParams(params[i]);
             }

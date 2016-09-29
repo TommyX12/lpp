@@ -68,15 +68,19 @@ Item {
     property real editEnd;
     property var editingAction: null;
     
+    property int editType: 0;
+    
     property alias finder: finder;
     
-    property alias snapNow: snapNowBox.checked
-    property alias snapMarker: snapMarkerBox.checked
-    property alias snapTime: snapTimeBox.checked
+    property bool snapNow: snapNowBox.checked
+    property bool snapMarker: snapMarkerBox.checked
+    property bool snapTime: snapTimeBox.checked
     property real snapNowRange: minuteLength * 60 / cameraZoom;
     property real snapMarkerRange: minuteLength * 80 / cameraZoom;
     property real snapTimeRange: minuteLength * 40 / cameraZoom;
     property real snapTimeInterval: minuteLength * 15;
+    
+    property var timeFrameLimit: dayLength * 3650; 
     
     property bool activeDrawEnabled: false;
     
@@ -227,7 +231,7 @@ Item {
             editBlock.sessionBlock.buttonColor = "white";
         }
         else {
-            editBlock.sessionBlock.text = editingAction.name;
+            editBlock.sessionBlock.text = editType == 1 ? qsTr("[Time Frame]") : editingAction.name;
             editBlock.sessionBlock.buttonColor = editingAction.parentFolder.color;
         }
         reposition();
@@ -241,12 +245,18 @@ Item {
     
     function startEdit(action){
         editing = true;
+        editType = 0;
+        
+        snapNow = Qt.binding(function(){return snapNowBox.checked});
+        snapMarker = Qt.binding(function(){return snapMarkerBox.checked});
+        snapTime = Qt.binding(function(){return snapTimeBox.checked});
+        
         editBlock.opacity = 0.0;
         editingAction = action;
         editEnd = editBegin = 0;
         refreshEditBlock();
-        editWindow.visible = true;
         
+        editWindow.show();
         editWindow.begin = editWindow.end = "";
         if (action == null) editWindow.findAction();
     }
@@ -272,14 +282,85 @@ Item {
         }
         
         editing = false;
-        if (editBlock.opacity != 0.0) Engine.drawTimelineRange(editingAction, editBeginDate, editEndDate);
         
+        if (editBlock.opacity != 0.0) Engine.drawTimelineRange(editingAction, editBeginDate, editEndDate);
         finishEdit();
+        
         editWindow.close();
     }
     function discardEdit(){
         editing = false;
         editWindow.close();
+    }
+    
+    function startNewPlan(){
+        finder.show(false, true, false, startNewPlanEdit, qsTr("Select Required Action"));
+    }
+    function startNewPlanEdit(item){
+        if (item != null){
+            editing = true;
+            editType = 1;
+            
+            snapNow = false;
+            snapMarker = false;
+            snapTime = true;
+            
+            editBlock.opacity = 0.0;
+            editingAction = item;
+            editEnd = editBegin = 0;
+            refreshEditBlock();
+            
+            planWindow.show();
+            planWindow.begin = planWindow.end = "";
+        }
+    }
+
+    /*
+    function dateToString(date){
+        return date.getUTCFullYear() + "-" + (date.getUTCMonth()+1) + "-" + date.getUTCDate() + " " + date.getUTCHours() + ":" + date.getUTCMinutes();
+    }
+    */
+    function saveNewPlan(){
+        
+        //check for shit
+        var editBeginTime = pintvSelector.getBeginTime();
+        var editEndTime = pintvSelector.getEndTime();
+        
+        if (Math.abs(editBeginTime - editEndTime) > timeFrameLimit) {
+            mainWindow.showError(qsTr("Error"), qsTr("Time frame size limit exceeded."));
+            return;
+        }
+        
+        var editBeginDate = new Date(Math.min(editBeginTime, editEndTime));
+        var editEndDate = new Date(Math.max(editBeginTime, editEndTime));
+        if (isNaN(editBeginDate.getTime()) || isNaN(editEndDate.getTime()) || editBeginTime == editEndTime){
+            mainWindow.showError(qsTr("Error"), qsTr("Invalid session."));
+            return;
+        }
+        
+        editing = false;
+        
+        planWindow.close();
+        //select action in library
+        mainWindow.showModuleDirect(root.missionsModule);                        
+        root.missionsModule.selector.select(timeline.editingAction);
+        //launch editor
+        root.missionsModule.content.editor.select(timeline.editingAction);
+        //call editor's editAttachedPlan
+        var aplan = root.missionsModule.content.editor.actionEditor.createAttachedPlan();
+        //set shit
+        var newInstance = aplan.instances.at(0);
+        newInstance.startTime = editBeginDate;
+        newInstance.endTime = editEndDate;
+        
+        root.missionsModule.content.editor.actionEditor.editAttachedPlan(aplan);
+        
+        root.missionsModule.content.editor.actionEditor.aplanWindow.lengthSelector.setMinutes(Math.round(Math.abs(editBeginTime - editEndTime) / minuteLength));
+        
+    }
+    function discardNewPlan(){
+        editing = false;
+        planWindow.close();
     }
     
     function editSession(marker){
@@ -495,6 +576,111 @@ Item {
                 Layout.maximumWidth: 65536
                 onClicked: {
                     timeline.discardEdit();
+                }
+            }
+        }
+    }
+    
+    ApplicationWindow {
+        visible: false
+        id: planWindow
+        minimumWidth: 400
+        minimumHeight: 300
+        title: qsTr("Create Attached Mission")
+        flags: Qt.Dialog;
+        //modality: Qt.WindowModal
+        maximumHeight: minimumHeight
+        maximumWidth: minimumWidth
+        
+        property alias begin: pintvSelector.begin;
+        property alias end: pintvSelector.end;
+        
+        function findAction(){
+            timeline.finder.show(false, true, false, selectAction, qsTr("Select Required Action"));
+        }
+        
+        function selectAction(item){
+            if (item != null) timeline.editingAction = item;
+            
+        }
+        
+        onClosing: {
+            timeline.discardNewPlan();
+        }
+        
+        ColumnLayout {
+            anchors.fill: parent;
+            anchors.topMargin: 10
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            anchors.bottomMargin: 10
+            
+            GroupBox {
+                Layout.minimumHeight: 40
+                Layout.maximumHeight: 65536
+                Layout.minimumWidth: 40
+                Layout.maximumWidth: 65536
+                Layout.fillWidth: true
+                title: qsTr("Help")
+                Label {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    anchors.fill: parent
+                    text: qsTr("Left click and drag on the timeline to draw the time frame, then click 'Next' to create an attached mission for the action selected.");
+                }
+            }
+            
+            GroupBox {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 30
+                Layout.maximumHeight: 65536
+                title: qsTr("Required Action");
+                RowLayout {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    Button {
+                        text: qsTr("Select")
+                        onClicked: planWindow.findAction();
+                    }
+                    SimpleButton {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 50
+                        Layout.maximumWidth: 65536
+                        text: timeline.editingAction != null ? timeline.editingAction.name : "";
+                        buttonColor: timeline.editingAction != null ? timeline.editingAction.parentFolder.color : "";
+                    }
+                }
+            }
+            
+            GroupBox {
+                Layout.fillWidth: true
+                title: qsTr("Time Frame");
+                IntervalSelector{
+                    id: pintvSelector
+                    anchors.fill: parent
+                }
+            }
+            
+            Button {
+                text: qsTr("Next")
+                Layout.fillWidth: true
+                Layout.minimumWidth: 10
+                Layout.maximumWidth: 65536
+                onClicked: {
+                    timeline.saveNewPlan();
+                }
+            }
+            
+            Button {
+                text: qsTr("Cancel")
+                Layout.fillWidth: true
+                Layout.minimumWidth: 10
+                Layout.maximumWidth: 65536
+                onClicked: {
+                    timeline.discardNewPlan();
                 }
             }
         }
@@ -1057,8 +1243,15 @@ Item {
             
             var editBeginDate = new Date(Math.min(editBegin, editEnd));
             var editEndDate = new Date(Math.max(editBegin, editEnd));
-            editWindow.begin = Engine.timeToString(editBeginDate);
-            editWindow.end = Engine.timeToString(editEndDate);
+            if (editType == 0){
+                editWindow.begin = Engine.timeToString(editBeginDate);
+                editWindow.end = Engine.timeToString(editEndDate);
+            }
+            else {
+                planWindow.begin = Engine.timeToString(editBeginDate);
+                planWindow.end = Engine.timeToString(editEndDate);
+            }
+
             reposition();
         }
     }

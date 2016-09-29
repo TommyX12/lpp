@@ -21,6 +21,8 @@ Item {
     
     property var backHandler: null;
     
+    property alias aplanWindow: aplanWindow
+    
     function load(action) {
         currentItem = action;
         
@@ -106,6 +108,8 @@ Item {
         Engine.saveAction(currentItem);
         refreshExtra();
         editAttachedPlan(aplan);
+        
+        return aplan;
     }
     
     function editAttachedPlan(attachedPlan){
