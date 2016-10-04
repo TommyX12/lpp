@@ -51,7 +51,7 @@ RowLayout {
                 
                 color: button.label.color
                 
-                text: object == null ? "" : (object.name.length == 0 ? qsTr("(unnamed)") : object.name);
+                text: object == null ? "" : ((object.name.length == 0 ? qsTr("(unnamed)") : object.name) + (object.permanent ? qsTr("(permanent)") : ""));
             }
             
             Label {

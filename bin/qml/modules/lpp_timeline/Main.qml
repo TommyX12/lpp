@@ -18,6 +18,7 @@ Item {
     property alias timeline: timelineView.timeline;
     
     property alias occurrenceWindow: occurrenceWindow
+    property alias adjustWindow: adjustWindow
     
     signal enter();
     
@@ -89,6 +90,10 @@ Item {
     
     OccurrenceWindow {
         id: occurrenceWindow
+    }
+    
+    AdjustWindow {
+        id: adjustWindow
     }
     
 }

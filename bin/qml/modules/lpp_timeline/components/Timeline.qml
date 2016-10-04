@@ -28,7 +28,7 @@ Item {
     property real marginBias: hourLength;
     property real loadedRadius: 5 * dayLength / 2;
     property real moveSpeedMul: 1;
-    property real zoomSpeedMul: 3;
+    property real zoomSpeedMul: 4;
     
     property real maxSessionLength: dayLength / 2;
     
@@ -41,7 +41,7 @@ Item {
     //property real cameraTimeDest;
     property real cameraZoom;
     //property real cameraZoomDest;
-    property real cameraZoomDefault: 4;
+    property real cameraZoomDefault: 8;
     property real cameraZoomMin: 1;
     property real cameraZoomMax: 32;
     

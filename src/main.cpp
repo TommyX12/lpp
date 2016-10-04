@@ -21,7 +21,10 @@ when things don't fucking work for no fucking reason:
     delete the makefiles in release bin folder, and also the o and cpp file in bin folder if:
         add, modified, renamed, or removed resources caused problem or not updated correctly. also manually update project.pro if necessary
         macro related problems (make-no-fucking-sense errors)
-    to make layout resize work correctly, all minimum size must be specified even if they are 0.
+    to make layout resize work correctly, all minimum and maximum size must be specified even if they are 0.
+    to make groupbox item anchor, a width and height must be given.
+        same goes for application window. 
+        setting min max width height DOES NOT count as setting width and height.
     MouseArea will prevent lower MouseAreas from receiving event
     Keys.onReturnPressed is main enter, Keys.onEnterPressed is keypad enter
     QObject derived class cannot be copied by value (no copy constructor or =operator)

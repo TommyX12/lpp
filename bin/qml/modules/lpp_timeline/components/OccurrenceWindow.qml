@@ -17,6 +17,13 @@ ApplicationWindow {
     modality: Qt.WindowModal
     maximumWidth: 65536
     maximumHeight: 65536
+    width: 400
+    height: 450
+    
+    Rectangle {
+        color: "white"
+        anchors.fill: parent
+    }
     
     property Occurrence occurrence;
     

@@ -31,6 +31,8 @@ namespace LPP
         Q_PROPERTY(QString note READ note WRITE setNote NOTIFY noteChanged)
         Q_PROPERTY(Folder* parentFolder READ parentFolder NOTIFY parentFolderChanged)
         
+        Q_PROPERTY(bool permanent READ permanent WRITE setPermanent NOTIFY permanentChanged)
+        
         Q_PROPERTY(QObjectVector* objectives READ objectives NOTIFY objectivesChanged)
         Q_PROPERTY(Int completionMode READ completionMode WRITE setCompletionMode NOTIFY completionModeChanged)
             //0: ALL, 1: ANY
@@ -57,6 +59,9 @@ namespace LPP
         QString note();
         QString setNote(const QString&);
         
+        bool permanent();
+        bool setPermanent(bool);
+        
         virtual void setParam(const QString&, const QString&);
         virtual QVector<QPair<QString, QString>> getParams();
         
@@ -81,6 +86,8 @@ namespace LPP
         Int m_id;
         QString m_name, m_note;
         
+        bool m_permanent;
+        
         QObjectVector m_objectives, m_instances;
         
         Int m_completionMode;
@@ -92,6 +99,8 @@ namespace LPP
         void noteChanged();
         void completionModeChanged();
         void parentFolderChanged();
+        
+        void permanentChanged();
         
         void typeChanged();
         

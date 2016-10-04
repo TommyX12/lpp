@@ -18,6 +18,7 @@ namespace LPP
         this->m_name = "";
         this->m_note = "";
         this->m_completionMode = 0;
+        this->m_permanent = true;
         this->updateFullPath();
     }
     
@@ -100,6 +101,18 @@ namespace LPP
         this->m_note = note;
         emit this->noteChanged();
         return this->m_note;
+    }
+    
+    bool Plan::permanent()
+    {
+        return this->m_permanent;
+    }
+    
+    bool Plan::setPermanent(bool permanent)
+    {
+        this->m_permanent = permanent;
+        emit this->permanentChanged();
+        return this->m_permanent;
     }
     
     void Plan::setParam(const QString& name, const QString& value)

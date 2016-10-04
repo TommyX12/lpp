@@ -120,6 +120,8 @@ namespace LPP
         newPlan->createInstance();
         newPlan->createObjective(this);
         
+        newPlan->setPermanent(false);
+        
         return newPlan;
     }
     

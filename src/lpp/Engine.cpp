@@ -410,6 +410,8 @@ namespace LPP
         newPlan->setID(id);
         newPlan->setParentFolder(parentFolder);
         
+        newPlan->setPermanent(true);
+        
         parentFolder->plans()->push(newPlan);
         
         this->m_plans[id] = newPlan;
@@ -472,6 +474,11 @@ namespace LPP
     void Engine::savePlan(Plan* plan)
     {
         if (plan == nullptr) return;
+        
+        if (plan->parentFolder() == nullptr) {
+            this->saveAction(static_cast<Objective*>(plan->objectives()->at(0))->action());
+            return;
+        }
         
         //std::sort(plan->objectives()->getData().begin(), plan->objectives()->getData().end(), Plan::compareObjective);
         std::sort(plan->instances()->getData().begin(), plan->instances()->getData().end(), Plan::compareInstance);
@@ -1277,6 +1284,9 @@ namespace LPP
                     bool modified = false;
                     for (int i = 0; i < action->plans()->size(); i++){
                         Plan* plan = static_cast<Plan*>(action->plans()->at(i));
+                        
+                        if (plan->permanent()) continue;
+                        
                         Instance* instance = static_cast<Instance*>(plan->instances()->at(0));
                         bool needsRemove = false;
                         if (instance->repeatMode() == "none"){
@@ -1577,6 +1587,8 @@ namespace LPP
             this->m_sessionsChanged = false;
             
             this->m_occurrencesChanged = false;
+            
+            this->m_timeChanged = false;
         }
         else if (this->m_timeChanged){
             this->extractAllOccurrences(this->pastMax(), this->planningMax(), this->m_occurrences, true);

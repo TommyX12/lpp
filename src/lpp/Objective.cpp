@@ -30,7 +30,7 @@ namespace LPP
     
     Action* Objective::setAction(Action* action)
     {
-        Engine::current()->setOccurrencesChanged();
+        Engine::current()->setTimeChanged();
         
         this->m_action = action;
         emit this->actionChanged();
@@ -44,7 +44,7 @@ namespace LPP
     
     Int Objective::setLength(Int length)
     {
-        Engine::current()->setOccurrencesChanged();
+        Engine::current()->setTimeChanged();
         
         this->m_length = length;
         emit this->lengthChanged();
