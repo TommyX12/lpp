@@ -273,7 +273,19 @@ ColumnLayout {
             Layout.minimumWidth: 20
             
             onClicked: {
-                timeline.resetCamera(true, true);
+                timeline.resetCamera(true, false);
+            }
+        }
+        SimpleButton {
+            text: qsTr("Reset Zoom")
+            enabled: true
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            Layout.fillWidth: true
+            Layout.maximumWidth: 65536
+            Layout.minimumWidth: 20
+            
+            onClicked: {
+                timeline.resetCamera(false, true);
             }
         }
         SimpleButton {

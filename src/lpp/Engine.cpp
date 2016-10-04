@@ -1402,7 +1402,7 @@ namespace LPP
                     int l = occurrence->status.length();
                     for (int i = 0; i < l; i++){
                         Objective* objective = static_cast<Objective*>(occurrence->plan()->objectives()->at(i));
-                        SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), std::max(0, objective->length() - occurrence->status[i]), occurrence, objective->action());
+                        SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), std::max(0, objective->length() - occurrence->status[i]), occurrence, i, objective->action());
     
                         ranges.append(range);
                         
@@ -1414,7 +1414,7 @@ namespace LPP
                     for (int i = 0; i < l; i++){
                         Objective* objective = static_cast<Objective*>(occurrence->plan()->objectives()->at(i));
                         if (std::max(0, objective->length() - occurrence->status[i]) == occurrence->minRequirement()){
-                            SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, objective->action());
+                            SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, i, objective->action());
         
                             ranges.append(range);
                             
@@ -1813,7 +1813,8 @@ namespace LPP
     
     bool Engine::compareSimpleOccurrences(SimpleOccurrence* a, SimpleOccurrence* b)
     {
-        return a->end < b->end || (a->end == b->end && (a->start < b->start || (a->start == b->start && a->requirement < b->requirement)));
+        return a->end < b->end || (a->end == b->end && (a->start < b->start || (a->start == b->start && 
+                       (a->objectiveIndex < b->objectiveIndex || (a->objectiveIndex == b->objectiveIndex && a->requirement < b->requirement)))));
     }
     
     void Engine::checkConditions(QObjectVector& occurrenceList)
@@ -1973,7 +1974,7 @@ namespace LPP
             }
             
             if (occurrence->minRequirement()){
-                SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence);
+                SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, 0);
                 
                 ranges.append(range);
             }

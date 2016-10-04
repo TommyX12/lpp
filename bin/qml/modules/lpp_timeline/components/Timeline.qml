@@ -41,7 +41,7 @@ Item {
     //property real cameraTimeDest;
     property real cameraZoom;
     //property real cameraZoomDest;
-    property real cameraZoomDefault: 8;
+    property real cameraZoomDefault: 4;
     property real cameraZoomMin: 1;
     property real cameraZoomMax: 32;
     

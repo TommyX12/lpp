@@ -15,6 +15,52 @@ RowLayout {
     
     property var editFunc: null;
     property var deleteFunc: null;
+    property var moveFunc: null;
+    
+    Item {
+        Layout.alignment: Qt.AlignCenter
+        
+        visible: objective != null
+        
+        width: 30
+        height: 30
+        
+        SimpleButton{
+            height: 15
+            width: 30
+            
+            Image{
+                source: "qrc:/images/grey_triangle.png"
+                width: 10
+                height: 10                
+                anchors.centerIn: parent
+                fillMode: Image.PreserveAspectFit
+            }
+            
+            onClicked: {
+                moveFunc(objective, -1)
+            }
+        }
+        
+        SimpleButton{
+            height: 15
+            width: 30
+            y: 15
+            
+            Image{
+                source: "qrc:/images/grey_triangle.png"
+                width: 10
+                height: 10
+                rotation: 180
+                anchors.centerIn: parent
+                fillMode: Image.PreserveAspectFit
+            }
+            
+            onClicked: {
+                moveFunc(objective, 1)
+            }
+        }
+    }
 
     SimpleButton {
         

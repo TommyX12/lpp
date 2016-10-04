@@ -74,6 +74,7 @@ namespace LPP
         static bool compareInstance(QObject*, QObject*);
         
         Q_INVOKABLE QObject* createObjective(Action*);
+        Q_INVOKABLE void moveObjective(Objective*, Int);
         Q_INVOKABLE void deleteObjective(Objective*);
         
         Q_INVOKABLE QObject* createInstance();

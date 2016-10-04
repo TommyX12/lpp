@@ -198,6 +198,19 @@ namespace LPP
         return newObject;
     }
     
+    void Plan::moveObjective(Objective* objective, Int indexChange)
+    {
+        Engine::current()->setOccurrencesChanged();
+        
+        for (int i = 0; i < this->objectives()->size(); ++i){
+            Objective* _objective = static_cast<Objective*>(this->objectives()->at(i));
+            if (objective == _objective){
+                this->objectives()->getData().move(i, std::min(std::max(i + indexChange, 0), this->objectives()->size() - 1));
+                break;
+            }
+        }
+    }
+    
     void Plan::deleteObjective(Objective* objective)
     {
         Engine::current()->setOccurrencesChanged();
@@ -210,7 +223,7 @@ namespace LPP
     
     QObject* Plan::createInstance()
     {   
-        Engine::current()->setOccurrencesChanged();
+        Engine::current()->setSessionsChanged();
         
         Instance* newObject = new Instance();
         QQmlEngine::setObjectOwnership(newObject, QQmlEngine::CppOwnership);

@@ -120,13 +120,22 @@ Item {
     
     Component {
         id: objItem_comp
+        
         ObjectiveItem{
             
+            
+                
         }
     }
     
     function editObjective(objective){
         objWindow.show(currentItem, objective);
+    }
+    
+    function moveObjective(objective, indexChange){
+        currentItem.moveObjective(objective, indexChange);
+        Engine.savePlan(currentItem);
+        refreshExtra();
     }
     
     function deleteObjective(objective){
@@ -178,6 +187,7 @@ Item {
                 objItem.Layout.fillWidth = true;
                 objItem.editFunc = editObjective;
                 objItem.deleteFunc = deleteObjective;
+                objItem.moveFunc = moveObjective;
                 objItemPool.push(objItem);
             }
             

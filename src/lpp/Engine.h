@@ -44,11 +44,13 @@ namespace LPP
         Int requirement;
         Occurrence* occurrence;
         Action* action;
-        SimpleOccurrence(const QDateTime& start, const QDateTime& end, Int requirement, Occurrence* occurrence, Action* action = nullptr){
+        int objectiveIndex;
+        SimpleOccurrence(const QDateTime& start, const QDateTime& end, Int requirement, Occurrence* occurrence, int objectiveIndex, Action* action = nullptr){
             this->start = start;
             this->end = end;
             this->requirement = requirement;
             this->occurrence = occurrence;
+            this->objectiveIndex = objectiveIndex;
             this->action = action;
         };
     };
