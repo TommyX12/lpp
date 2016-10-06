@@ -66,6 +66,8 @@ Item {
     property bool editing: false;
     property real editBegin;
     property real editEnd;
+    property real oldBegin;
+    property real oldEnd;
     property var editingAction: null;
     
     property int editType: 0;
@@ -231,7 +233,7 @@ Item {
             editBlock.sessionBlock.buttonColor = "white";
         }
         else {
-            editBlock.sessionBlock.text = editType == 1 ? qsTr("[Time Frame]") : editingAction.name;
+            editBlock.sessionBlock.text = editType == 2 ? qsTr("[Time Frame]") : editingAction.name;
             editBlock.sessionBlock.buttonColor = editingAction.parentFolder.color;
         }
         reposition();
@@ -243,7 +245,7 @@ Item {
         //finishEdit();
     }
     
-    function startEdit(action){
+    function startEdit(action, findAction){
         editing = true;
         editType = 0;
         
@@ -256,9 +258,11 @@ Item {
         editEnd = editBegin = 0;
         refreshEditBlock();
         
+        oldBegin = -1;
+        
         editWindow.show();
         editWindow.begin = editWindow.end = "";
-        if (action == null) editWindow.findAction();
+        if (findAction == true) editWindow.findAction();
     }
     /*
     function dateToString(date){
@@ -283,7 +287,10 @@ Item {
         
         editing = false;
         
-        if (editBlock.opacity != 0.0) Engine.drawTimelineRange(editingAction, editBeginDate, editEndDate);
+        if (editBlock.opacity != 0.0) {
+            if (oldBegin != -1) Engine.drawTimelineRange(null, new Date(oldBegin), new Date(oldEnd));
+            Engine.drawTimelineRange(editingAction, editBeginDate, editEndDate);
+        }
         finishEdit();
         
         editWindow.close();
@@ -299,7 +306,7 @@ Item {
     function startNewPlanEdit(item){
         if (item != null){
             editing = true;
-            editType = 1;
+            editType = 2;
             
             snapNow = false;
             snapMarker = false;
@@ -367,14 +374,20 @@ Item {
         if (marker == null) return;
         var nextMarker = Engine.getMarkerAfter(marker.time);
         if (nextMarker == null) return;
-        editingAction = marker.action;
-        editBegin = marker.time.getTime();
-        editEnd = nextMarker.time.getTime();
-        sessionWindow.begin = Engine.timeToString(new Date(editBegin));
-        sessionWindow.end = Engine.timeToString(new Date(editEnd));
-        sessionWindow.visible = true;
+        
+        startEdit(marker.action, false)
+        
+        editType = 1;
+        
+        editBegin = oldBegin = marker.time.getTime();
+        editEnd = oldEnd = nextMarker.time.getTime();
+        editWindow.begin = Engine.timeToString(new Date(editBegin));
+        editWindow.end = Engine.timeToString(new Date(editEnd));
+        
+        editBlock.opacity = 1.0;
+        refreshEditBlock();
     }
-
+/*
     function saveSession(overLengthConfirmed){
         var editBeginTime = sintvSelector.getBeginTime();
         var editEndTime = sintvSelector.getEndTime();
@@ -397,7 +410,7 @@ Item {
         finishEdit();
         sessionWindow.close();
     }
-    
+    */
     Finder {
         id: finder
         visible: false
@@ -435,7 +448,7 @@ Item {
         id: editWindow
         minimumWidth: 400
         minimumHeight: 360
-        title: qsTr("Draw Session")
+        title: editType == 0 ? qsTr("Draw Session") : qsTr("Edit Session")
         flags: Qt.Dialog;
         //modality: Qt.WindowModal
         maximumHeight: minimumHeight
@@ -476,7 +489,8 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     anchors.fill: parent
-                    text: qsTr("Left click and drag on the timeline to draw a session, then click 'Save'.\nChoose 'Erase' to draw a free-session.");
+                    text: editType == 0 ? qsTr("Left click and drag on the timeline to draw a session, then click 'Draw'.\nChoose 'None' to draw a free-session.") :
+                                          qsTr("Left click and drag on the timeline to draw new range for the session.\nClick on the action name to locate it in library.")
                 }
             }
         
@@ -514,6 +528,13 @@ Item {
                             visible: timeline.editingAction != null;
                             text: timeline.editingAction.name;
                             buttonColor: timeline.editingAction.parentFolder.color;
+                            
+                            onClicked:{
+                                timeline.discardEdit();
+                                
+                                mainWindow.showModuleDirect(root.missionsModule);                        
+                                root.missionsModule.selector.select(timeline.editingAction);
+                            }
                         }
                         
                         Label {
@@ -560,7 +581,7 @@ Item {
             }
             
             Button {
-                text: qsTr("Draw")
+                text: editType == 0 ? qsTr("Draw") : qsTr("Save as Normal Session")
                 Layout.fillWidth: true
                 Layout.minimumWidth: 10
                 Layout.maximumWidth: 65536
@@ -685,7 +706,7 @@ Item {
             }
         }
     }
-    
+    /*
     ApplicationWindow {
         visible: false
         id: sessionWindow
@@ -811,7 +832,7 @@ Item {
             }
         }
     }
-    
+    */
     
     ApplicationWindow {
         visible: false
@@ -1242,11 +1263,11 @@ Item {
             
             var editBeginDate = new Date(Math.min(editBegin, editEnd));
             var editEndDate = new Date(Math.max(editBegin, editEnd));
-            if (editType == 0){
+            if (editType == 0 || editType == 1){
                 editWindow.begin = Engine.timeToString(editBeginDate);
                 editWindow.end = Engine.timeToString(editEndDate);
             }
-            else {
+            else if (editType == 2){
                 planWindow.begin = Engine.timeToString(editBeginDate);
                 planWindow.end = Engine.timeToString(editEndDate);
             }

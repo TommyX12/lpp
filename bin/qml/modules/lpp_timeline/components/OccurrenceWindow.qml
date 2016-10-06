@@ -10,14 +10,14 @@ import modules.lpp_utils 1.0
 ApplicationWindow {
     visible: false
     id: window
-    minimumWidth: 400
+    minimumWidth: 550
     minimumHeight: 450
     title: qsTr("Mission Occurrence")
     flags: Qt.Dialog;
     modality: Qt.WindowModal
     maximumWidth: 65536
     maximumHeight: 65536
-    width: 400
+    width: 550
     height: 450
     
     Rectangle {
@@ -60,7 +60,7 @@ ApplicationWindow {
     
     function getStatusTxt(){
         if (occurrence == null) return ""
-        else if (occurrence.impossible) return occurrence.endTime <= Engine.currentTime() ? qsTr("Failed") : qsTr("Impossible under Current Schedules")
+        else if (occurrence.impossible) return occurrence.endTime <= Engine.currentTime() ? qsTr("Failed") : qsTr("Impossible without Causing Conflicts")
         else if (occurrence.progress < 1.0) return qsTr("Insufficient Planning")
         else if (occurrence.progressNow == 1.0) return qsTr("Completed")
         else if (occurrence.progressNow > 0.0) return qsTr("In Progress")

@@ -25,6 +25,7 @@ RowLayout {
         progressTxt.text = (objective == null) ? "" : "[ " + 
                                                  qsTr("Done: ") + Engine.minutesToString(object.getStatusNow(index)) + "  " + 
                                                  qsTr("Plan: ") + Engine.minutesToString(object.getStatus(index)) + "  " + 
+                                                 qsTr("Left: ") + Engine.minutesToString(objective.length - object.getStatusNow(index)) + "  " +
                                                  qsTr("Req: ") + Engine.minutesToString(objective.length) + " ]";
         progress = objective == null ? 0.0 : Math.min(1.0, object.getStatus(index) / objective.length);
         progressNow = objective == null ? 0.0 : Math.min(1.0, object.getStatusNow(index) / objective.length);

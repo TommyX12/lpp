@@ -94,8 +94,8 @@ namespace LPP
         this->m_plans.fill(nullptr, e_maxID);
         //this->m_planIDs.fill(0, e_maxID);
         
+        this->m_timeOrigin = this->m_timeOrigin.toUTC();
         this->m_timeOrigin.setMSecsSinceEpoch(0);
-        this->m_timeOrigin.setTimeSpec(Qt::UTC);
         
         /*
         TimelineMarker* origin = new TimelineMarker();
@@ -2019,7 +2019,7 @@ namespace LPP
                     TimeInterval firstFree = *firstFreeIt;
                     
                     if (firstFree.start >= range->end) {
-                        this->m_impossibleConditions.push(range->occurrence);
+                        if (!range->occurrence->impossible()) this->m_impossibleConditions.push(range->occurrence);
                         range->occurrence->setImpossible(true);
                         break;
                     }

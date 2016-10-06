@@ -159,7 +159,7 @@ ColumnLayout {
             text: qsTr("Manual Draw")
             enabled: !timeline.editing
             onClicked: {
-                timeline.startEdit(null);
+                timeline.startEdit(null, true);
             }
         }
         
