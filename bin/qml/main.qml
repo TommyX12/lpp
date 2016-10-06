@@ -36,6 +36,11 @@ ApplicationWindow {
     color: "#FFFFFF" 
     title: qsTr("Life++")
     
+    /*
+    contentItem.visible: active
+    contentItem.enabled: active
+    */
+    
     MouseArea {
         id: backMouseArea
         property int curX: 0;

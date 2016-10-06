@@ -14,6 +14,11 @@ Item {
     
     property int occItemHeight: 27
     
+    //property var freeTime: [0,0,0]
+    //property var freeTimePercentage: [0,0,0]
+    
+    property var freeTimeTxts: [freeTimeTxt1, freeTimeTxt2, freeTimeTxt3, freeTimeTxt4, freeTimeTxt5, freeTimeTxt6]
+    
     Component {
         id: occItem_comp
         OccurrenceItem{
@@ -77,6 +82,30 @@ Item {
         pastList.refresh();
         activeList.refresh();
         upcomingList.refresh();
+        
+        for (i = 0; i < freeTimeTxts.length; ++i){
+            var freeTime = Engine.getFreeTime(i);
+            var freeTimePercentage = Engine.getFreeTimePercentage(i);
+            
+            freeTimeTxts[i].text = Engine.minutesToString(freeTime) + " (" + (freeTimePercentage*100).toFixed(1) + "%)"
+            freeTimeTxts[i].color = getFreeTimeColor(freeTimePercentage)
+        }
+        
+    }
+    
+    function getFreeTimeColor(percentage){
+        if (percentage > 0.3){
+            return "#33BB33";
+        }
+        else if (percentage > 0.15){
+            return "#3333DD";
+        }
+        else if (percentage > 0.0){
+            return "#e89600";
+        }
+        else {
+            return "#DD3333";
+        }
     }
     
     function refreshAll(){
@@ -162,6 +191,67 @@ Item {
                     objItemComponent: occItem_comp
                     objItemHeight: occItemHeight
                     anchors.fill: parent
+                }
+            }
+        }
+        
+        GroupBox {
+            title: qsTr("Maximum Free Time")
+            Layout.minimumWidth: 100
+            Layout.maximumWidth: 65536
+            Layout.fillWidth: true
+            width: 10
+            height: 40
+            clip: true
+            GridLayout {
+                layoutDirection: Qt.LeftToRight
+                columnSpacing: 5
+                rows: 2
+                flow: GridLayout.LeftToRight
+                columns: 6
+                rowSpacing: 5
+                anchors.centerIn: parent
+                Label {
+                    text: qsTr("In 1 Day:")
+                }
+                Label {
+                    id: freeTimeTxt1
+                    font.bold: true
+                }
+                Label {
+                    text: qsTr("In 2 Days:")
+                }
+                Label {
+                    id: freeTimeTxt2
+                    font.bold: true
+                }
+                Label {
+                    text: qsTr("In 7 Days:")
+                }
+                Label {
+                    id: freeTimeTxt3
+                    font.bold: true
+                }
+                Label {
+                    text: qsTr("In 14 Days:")
+                }
+                Label {
+                    id: freeTimeTxt4
+                    font.bold: true
+                }
+                Label {
+                    text: qsTr("In 30 Days:")
+                }
+                Label {
+                    id: freeTimeTxt5
+                    font.bold: true
+                }
+                Label {
+                    text: qsTr("In 360 Days:")
+                }
+                Label {
+                    id: freeTimeTxt6
+                    font.bold: true
                 }
             }
         }

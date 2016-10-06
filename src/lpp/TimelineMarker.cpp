@@ -48,7 +48,7 @@ namespace LPP
     
     bool TimelineMarker::mergable(TimelineMarker* marker)
     {
-        return this->action() == marker->action() && this->isAuto() == marker->isAuto();
+        return (marker == nullptr && this->action() == nullptr) || (marker != nullptr && this->action() == marker->action() && this->isAuto() == marker->isAuto());
     }
     
     /*

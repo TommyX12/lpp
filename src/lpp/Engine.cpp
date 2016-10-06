@@ -67,6 +67,16 @@ namespace LPP
     
     void Engine::initialize(QApplication& app, QQmlApplicationEngine& engine)
     {
+        
+        this->m_freeTimeCheckRanges.append(1);
+        this->m_freeTimeCheckRanges.append(2);
+        this->m_freeTimeCheckRanges.append(7);
+        this->m_freeTimeCheckRanges.append(14);
+        this->m_freeTimeCheckRanges.append(30);
+        this->m_freeTimeCheckRanges.append(360);
+        
+        this->m_freeTime.fill(0, this->m_freeTimeCheckRanges.size());
+        
         this->appPath = app.applicationDirPath() + "/..";
         this->qmlPath = app.applicationDirPath() + "/../qml";
         this->savePath = this->appPath + e_savePath;
@@ -1181,10 +1191,11 @@ namespace LPP
     
     void Engine::deleteMarker(TimelineMarker* marker)
     {
+        if (marker == nullptr) return;
+        
         this->setSessionsChanged();
         
         QDateTime time = marker->time();
-        
         Int monthIndex = this->binarySearchMonth(marker->time());
         QVector<TimelineMarker*>* month = this->m_timeline[monthIndex];
         Int markerIndex = this->binarySearchMarker(month, marker->time());
@@ -1202,7 +1213,6 @@ namespace LPP
         else {
             this->m_monthModified[this->monthToKey(month)] = month;
         }
-        
         this->mergeMarkers(time);
     }
     
@@ -1245,7 +1255,6 @@ namespace LPP
         if (this->m_mergeDisabled) return;
         
         //print("merging");
-        
         TimelineMarker* marker = static_cast<TimelineMarker*>(this->getMarker(time));
         if (marker == nullptr) {
             TimelineMarker* markerNext = static_cast<TimelineMarker*>(this->getNextMarker());
@@ -1263,8 +1272,8 @@ namespace LPP
         else if (markerNext != nullptr && marker->action() == markerNext->action()) this->deleteMarker(markerNext);
         */
         
-        if ((markerPrev == nullptr && marker->action() == nullptr) || marker->mergable(markerPrev)) this->deleteMarker(marker);
-        else if (markerNext != nullptr && marker->mergable(markerNext)) this->deleteMarker(markerNext);
+        if (marker->mergable(markerPrev)) this->deleteMarker(marker);
+        else if (marker->mergable(markerNext)) this->deleteMarker(markerNext);
     }
     
     void Engine::refresh()
@@ -1365,6 +1374,23 @@ namespace LPP
         };
     };
     
+    struct ReversedTimeInterval
+    {
+        QDateTime start, end;
+        ReversedTimeInterval(const QDateTime& start, const QDateTime& end){
+            this->start = start;
+            this->end = end;
+        };
+        bool operator<(const ReversedTimeInterval& b) const
+        {
+            return this->end > b.end;
+        };
+        bool operator==(const ReversedTimeInterval& b) const
+        {
+            return this->end == b.end;
+        };
+    };
+    
     void Engine::autoPlan(bool freeSessionsOnly)
     {
         if (!this->m_autoplanDesynced) {
@@ -1376,9 +1402,8 @@ namespace LPP
         
         if (!freeSessionsOnly) this->eraseAutoPlan();
         
-            
-        QObjectVector& occurrenceList = *this->occurrences();
         
+        QObjectVector& occurrenceList = *this->occurrences();
         
         
         //check condition of every objective of every occurrence
@@ -1427,6 +1452,7 @@ namespace LPP
             }
         }
         
+        
         if (ranges.size()) {
         
         
@@ -1442,7 +1468,7 @@ namespace LPP
                 if (markerPrev == nullptr || markerPrev->action() == nullptr){
                     QDateTime rangeStart = markerPrev == nullptr ? cuttingTime : std::max(cuttingTime, markerPrev->time());
                     QDateTime rangeEnd = marker == nullptr ? futureBound : std::min(marker->time(), futureBound);
-                    freeRanges.insert(TimeInterval(rangeStart, rangeEnd));
+                    freeRanges.insert(freeRanges.end(), TimeInterval(rangeStart, rangeEnd));
                 }
                 if (marker == nullptr || marker->time() >= futureBound) break;
                 markerPrev = marker;
@@ -1450,7 +1476,7 @@ namespace LPP
             
             //qDebug() << "here";
             
-            freeRanges.insert(TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
+            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
             
             for (SimpleOccurrence* range:ranges){
                 while (range->requirement){
@@ -1461,9 +1487,9 @@ namespace LPP
                         break;
                     }
                     else if (firstFree.start < range->start){
-                        freeRanges.erase(firstFreeIt);
-                        freeRanges.insert(TimeInterval(firstFree.start, range->start));
-                        freeRanges.insert(TimeInterval(range->start, firstFree.end));
+                        std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
+                        freeRanges.insert(hint, TimeInterval(firstFree.start, range->start));
+                        freeRanges.insert(hint, TimeInterval(range->start, firstFree.end));
                         continue;
                     }
                     else {
@@ -1485,8 +1511,8 @@ namespace LPP
                         }
                         else {
                             this->drawTimelineRange(range->action, firstFree.start, std::min(this->m_autoplanMax, firstFree.start.addSecs((Int64)range->requirement * 60)), true);
-                            freeRanges.erase(firstFreeIt);
-                            freeRanges.insert(TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
+                            std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
+                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
                             break;
                         }
                     }
@@ -1604,14 +1630,6 @@ namespace LPP
             this->checkConditions(this->m_occurrences);
             
             this->m_sessionsChanged = false;
-        }
-        
-        if (this->m_impossibleConditions.size()) {
-            qDebug() << "Impossible Conditions: ";
-            for (QObject* object:this->m_impossibleConditions.getData()) {
-                Occurrence* occurrence = static_cast<Occurrence*>(object);
-                qDebug() << occurrence->plan()->name() << occurrence->startTime();
-            }
         }
         
         return &this->m_occurrences;
@@ -1817,14 +1835,250 @@ namespace LPP
                        (a->objectiveIndex < b->objectiveIndex || (a->objectiveIndex == b->objectiveIndex && a->requirement < b->requirement)))));
     }
     
+    bool Engine::compareSimpleOccurrencesBack(SimpleOccurrence* a, SimpleOccurrence* b)
+    {
+        return a->start > b->start || (a->start == b->start && (a->end > b->end));
+    }
+    
     void Engine::checkConditions(QObjectVector& occurrenceList)
     {
+        
         std::chrono::steady_clock::time_point _begin = std::chrono::steady_clock::now();
         
         
         //check condition of every objective of every occurrence
         QDateTime cuttingTime = this->limitTimePrecision(Engine::currentTime());
         
+        
+        
+        //////check free time//////
+        
+        //write progress and min requirement.
+        this->checkProgress(occurrenceList, cuttingTime, false, true);
+        
+        
+        //scan for occurrences that need requirement. 
+        QVector<SimpleOccurrence*> rangesBack;
+        
+        for (QObject* object:occurrenceList.getData()){
+            Occurrence* occurrence = static_cast<Occurrence*>(object);
+            
+            if (occurrence->minRequirement()){
+                SimpleOccurrence* rangeBack = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, 0);
+                
+                rangesBack.append(rangeBack);
+            }
+        }
+        
+        
+        if (rangesBack.size()) std::sort(rangesBack.begin(), rangesBack.end(), compareSimpleOccurrencesBack);
+        
+        std::set<ReversedTimeInterval> freeRangesBack;
+        
+        //scan for auto-plannable sessions in the future
+        QDateTime futureBound = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[this->m_freeTimeCheckRanges.size()-1] * c_dayMSec);
+        
+        if (rangesBack.size()) futureBound = std::max(rangesBack.first()->end, futureBound);
+        
+        TimelineMarker* markerPrev = static_cast<TimelineMarker*>(this->getMarker(cuttingTime));
+        while (true){
+            TimelineMarker* marker = static_cast<TimelineMarker*>(this->getNextMarker());
+            if (markerPrev == nullptr || markerPrev->action() == nullptr || markerPrev->isAuto()){
+                QDateTime rangeStart = markerPrev == nullptr ? cuttingTime : std::max(cuttingTime, markerPrev->time());
+                QDateTime rangeEnd = marker == nullptr ? futureBound : std::min(marker->time(), futureBound);
+                freeRangesBack.insert(freeRangesBack.begin(), ReversedTimeInterval(rangeEnd, rangeStart));
+            }
+            if (marker == nullptr || marker->time() >= futureBound) break;
+            markerPrev = marker;
+        }
+        
+        freeRangesBack.insert(freeRangesBack.end(), ReversedTimeInterval(cuttingTime.addSecs(-60), cuttingTime.addSecs(-120)));
+        
+        
+        if (rangesBack.size()) {
+        
+            //fill auto-plannable sessions as late as possible
+            for (SimpleOccurrence* range:rangesBack){
+                while (range->requirement){
+                    std::set<ReversedTimeInterval>::iterator firstFreeIt = freeRangesBack.upper_bound(ReversedTimeInterval(futureBound, range->end));
+                    ReversedTimeInterval firstFree = *firstFreeIt;
+                    if (firstFree.start <= range->start) {
+                        break;
+                    }
+                    else if (firstFree.start > range->end){
+                        std::set<ReversedTimeInterval>::iterator hint = freeRangesBack.erase(firstFreeIt);
+                        freeRangesBack.insert(hint, ReversedTimeInterval(firstFree.start, range->end));
+                        freeRangesBack.insert(hint, ReversedTimeInterval(range->end, firstFree.end));
+                        continue;
+                    }
+                    else {
+                        if (firstFree.start < range->end){
+                            range->end = firstFree.start;
+                        }
+                        Int rangeLength = range->start.secsTo(range->end) / 60;
+                        if (rangeLength < range->requirement){
+                            range->requirement = rangeLength;
+                        }
+                        Int length = firstFree.end.secsTo(firstFree.start) / 60;
+                        if (length <= range->requirement){
+                            range->end = firstFree.end;
+                            range->requirement -= length;
+                            freeRangesBack.erase(firstFreeIt);
+                            continue;
+                        }
+                        else {
+                            std::set<ReversedTimeInterval>::iterator hint = freeRangesBack.erase(firstFreeIt);
+                            freeRangesBack.insert(hint, ReversedTimeInterval(firstFree.start.addSecs(-(Int64)range->requirement * 60), firstFree.end));
+                            break;
+                        }
+                    }
+                }
+                //if (this->m_impossibleCondition != nullptr) break;
+            }
+
+            
+            for (SimpleOccurrence* range:rangesBack){
+                delete range;
+            }
+            
+        }
+        
+        //detect left overs and write to free time
+        
+        std::set<ReversedTimeInterval>::iterator end = freeRangesBack.end();
+        end--;
+        freeRangesBack.erase(end);
+        
+        
+        int numCheckRanges = this->m_freeTimeCheckRanges.size();
+        
+        QDateTime* freeTimeCheckRangeEnds = new QDateTime[numCheckRanges + 1];
+        
+        for (int i = 0; i < numCheckRanges; ++i){
+            freeTimeCheckRangeEnds[i] = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[i] * c_dayMSec);
+            this->m_freeTime[i] = 0;
+        }
+        
+        for (auto freeRange:freeRangesBack){
+            for (int i = 0; i < numCheckRanges; ++i){
+                if (freeRange.end < freeTimeCheckRangeEnds[i]){
+                    this->m_freeTime[i] += freeRange.end.secsTo(std::min(freeRange.start, freeTimeCheckRangeEnds[i])) / 60;
+                }
+            }
+        }
+        
+        delete freeTimeCheckRangeEnds;
+        
+        
+        
+        //////check conflict and write correct progress//////
+        
+        
+        this->checkProgress(occurrenceList, cuttingTime, true, false);
+        
+        this->m_impossibleConditions.clear();
+        
+        //scan for occurrences that need requirement. 
+        
+        QVector<SimpleOccurrence*> ranges;
+        
+        for (QObject* object:occurrenceList.getData()){
+            Occurrence* occurrence = static_cast<Occurrence*>(object);
+            
+            //qDebug() << occurrence->plan()->name() << occurrence->minRequirement();
+            occurrence->updateProgress();
+            
+            if (occurrence->progressNow() < 1.0f && occurrence->endTime() <= cuttingTime) {
+                occurrence->setImpossible(true);
+            }
+            
+            if (occurrence->minRequirement()){
+                SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, 0);
+                
+                ranges.append(range);
+            }
+        }
+        
+        if (ranges.size()) {
+            
+            std::sort(ranges.begin(), ranges.end(), compareSimpleOccurrences);
+            
+            
+            std::set<TimeInterval> freeRanges;
+            
+            futureBound = ranges.last()->end;
+            
+            freeRanges.insert(freeRanges.end(), TimeInterval(cuttingTime, futureBound));
+            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
+            
+            //fill future as early as possible
+            for (SimpleOccurrence* range:ranges){
+                while (range->requirement){
+                    std::set<TimeInterval>::iterator firstFreeIt = freeRanges.upper_bound(TimeInterval(this->timeOrigin(), range->start));
+                    
+                    TimeInterval firstFree = *firstFreeIt;
+                    
+                    if (firstFree.start >= range->end) {
+                        this->m_impossibleConditions.push(range->occurrence);
+                        range->occurrence->setImpossible(true);
+                        break;
+                    }
+                    else if (firstFree.start < range->start){
+                        std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
+                        freeRanges.insert(hint, TimeInterval(firstFree.start, range->start));
+                        freeRanges.insert(hint, TimeInterval(range->start, firstFree.end));
+                        continue;
+                    }
+                    else {
+                        if (firstFree.start > range->start){
+                            range->start = firstFree.start;
+                        }
+                        Int rangeLength = range->start.secsTo(range->end) / 60;
+                        if (rangeLength < range->requirement){
+                            range->requirement = rangeLength;
+                            if (!range->occurrence->impossible()) this->m_impossibleConditions.push(range->occurrence);
+                            range->occurrence->setImpossible(true);
+                        }
+                        Int length = firstFree.start.secsTo(firstFree.end) / 60;
+                        if (length <= range->requirement){
+                            range->start = firstFree.end;
+                            range->requirement -= length;
+                            freeRanges.erase(firstFreeIt);
+                            continue;
+                        }
+                        else {
+                            std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
+                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
+                            break;
+                        }
+                    }
+                }
+                //if (this->m_impossibleCondition != nullptr) break;
+            }
+            
+            
+            for (SimpleOccurrence* range:ranges){
+                delete range;
+            }
+        
+        }
+        
+        
+        std::chrono::steady_clock::time_point _end = std::chrono::steady_clock::now();
+        
+        qDebug() << "Time Elapsed for Condition Check = " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _begin).count();
+        
+        if (this->m_impossibleConditions.size()) {
+            qDebug() << "Impossible Conditions: ";
+            for (QObject* object:this->m_impossibleConditions.getData()) {
+                Occurrence* occurrence = static_cast<Occurrence*>(object);
+                qDebug() << occurrence->plan()->name() << occurrence->startTime();
+            }
+        }
+    }
+    
+    void Engine::checkProgress(QObjectVector& occurrenceList, const QDateTime& cuttingTime, bool countFutureAutoSessions, bool writeFutureSessionsToMinReq)
+    {
         QVector<MissionPoint*> points;
         
         for (QObject* object:occurrenceList.getData()){
@@ -1893,183 +2147,98 @@ namespace LPP
         TimelineMarker* markerBefore = static_cast<TimelineMarker*>(this->getMarker(prevTime));
         TimelineMarker* markerAfter = static_cast<TimelineMarker*>(this->getNextMarker());
         
-        if (markerBefore != markerAfter) {
-            for (MissionPoint* point:points){
-                const QDateTime& curTime = point->time;
-                while(prevTime < curTime){
-                    //increment the accumulator storing each action done time since first point to current point by going through each marker in between.
-                    //remember to interpolate between markers
-                    //if skipping over a month, use cache just like the below method.
-                    Int amount = 0, id = -1;
+        for (MissionPoint* point:points){
+            const QDateTime& curTime = point->time;
+            while(prevTime < curTime){
+                //increment the accumulator storing each action done time since first point to current point by going through each marker in between.
+                //remember to interpolate between markers
+                //if skipping over a month, use cache just like the below method.
+                Int amount = 0, id = -1, isAuto = false;
+                
+                if (markerBefore != nullptr) {
+                    if (markerBefore->action() != nullptr) id = markerBefore->action()->id();
+                    isAuto = markerBefore->isAuto();
+                }
+                
+                if (countFutureAutoSessions) isAuto = false;
+                
+                if (markerAfter == nullptr || markerAfter->time() > curTime){
+                    amount = prevTime.secsTo(isAuto ? std::min(cuttingTime, curTime) : curTime) / 60;
                     
-                    if (markerBefore != nullptr && markerBefore->action() != nullptr) id = markerBefore->action()->id();
+                    prevTime = curTime;
+                }
+                else {
+                    amount = prevTime.secsTo(isAuto ? std::min(cuttingTime, markerAfter->time()) : markerAfter->time()) / 60;
                     
-                    if (markerAfter == nullptr || markerAfter->time() > curTime){
-                        amount = prevTime.secsTo(curTime) / 60;
-                        
-                        prevTime = curTime;
+                    prevTime = markerAfter->time();
+                    markerBefore = markerAfter;
+                    markerAfter = static_cast<TimelineMarker*>(this->getNextMarker());
+                }
+                if (id >= 0 && amount > 0) accumulator[id] += amount;
+            }
+            
+            //get the time done since first point for THAT action and store it in the point.
+            point->progress = accumulator[point->objective->action()->id()];
+            
+            //qDebug() << point->time << point->progress << point->objective->action()->name();
+            
+            //if its end point, find its start point by pointer, calculate difference, and write status to the corresponding objective index in the occurrence.
+            if (point->start != nullptr){
+                
+                //qDebug() << point->occurrence->plan()->name() << point->progress << point->start->progress << point->objective->length() << point->occurrence->status[point->objectiveIndex];
+                
+                Int amount = point->progress - point->start->progress;
+                
+                point->occurrence->status[point->objectiveIndex] += amount;
+                
+                if (point->time > cuttingTime){
+                    Int requirement;
+                    if (writeFutureSessionsToMinReq){
+                        requirement = point->objective->length() - point->occurrence->status[point->objectiveIndex];
                     }
                     else {
-                        amount = prevTime.secsTo(markerAfter->time()) / 60;
-                        
-                        prevTime = markerAfter->time();
-                        markerBefore = markerAfter;
-                        markerAfter = static_cast<TimelineMarker*>(this->getNextMarker());
+                        requirement = point->objective->length() - point->occurrence->statusNow[point->objectiveIndex];
                     }
-                    if (id >= 0) accumulator[id] += amount;
+                    
+                    point->occurrence->setMinRequirement(std::max(0, requirement));
+                    /*
+                    SimpleOccurrence* range = new SimpleOccurrence();
+                    
+                    range->start = point->start->time;
+                    range->end = point->time;
+                    range->requirement = point->objective->length() - point->occurrence->status[point->objectiveIndex];
+                    
+                    ranges.append(range);
+                    */
                 }
+                else point->occurrence->statusNow[point->objectiveIndex] += amount;
                 
-                //get the time done since first point for THAT action and store it in the point.
-                point->progress = accumulator[point->objective->action()->id()];
+                //point->occurrence->status[point->objectiveIndex] += point->progress - point->start->progress;
                 
-                //qDebug() << point->time << point->progress << point->objective->action()->name();
-                
-                //if its end point, find its start point by pointer, calculate difference, and write status to the corresponding objective index in the occurrence.
-                if (point->start != nullptr){
-                    
-                    //qDebug() << point->occurrence->plan()->name() << point->progress << point->start->progress << point->objective->length() << point->occurrence->status[point->objectiveIndex];
-                    
-                    Int amount = point->progress - point->start->progress;
-                    
-                    point->occurrence->status[point->objectiveIndex] += amount;
-                    
-                    if (point->time > cuttingTime){
-                        point->occurrence->setMinRequirement(std::max(0, point->objective->length() - point->occurrence->status[point->objectiveIndex]));
-                        /*
-                        SimpleOccurrence* range = new SimpleOccurrence();
-                        
-                        range->start = point->start->time;
-                        range->end = point->time;
-                        range->requirement = point->objective->length() - point->occurrence->status[point->objectiveIndex];
-                        
-                        ranges.append(range);
-                        */
-                    }
-                    else point->occurrence->statusNow[point->objectiveIndex] += amount;
-                    
-                    //point->occurrence->status[point->objectiveIndex] += point->progress - point->start->progress;
-                    
-                }
             }
         }
         
         for (MissionPoint* point:points){
             delete point;
         }
-        
-        
-        //check conflict and write to global.
-        this->m_impossibleConditions.clear();
-        
-        QVector<SimpleOccurrence*> ranges;
-        
-        for (QObject* object:occurrenceList.getData()){
-            Occurrence* occurrence = static_cast<Occurrence*>(object);
-            
-            //qDebug() << occurrence->plan()->name() << occurrence->minRequirement();
-            occurrence->updateProgress();
-            
-            if (occurrence->progressNow() < 1.0f && occurrence->endTime() <= cuttingTime) {
-                occurrence->setImpossible(true);
-            }
-            
-            if (occurrence->minRequirement()){
-                SimpleOccurrence* range = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, 0);
-                
-                ranges.append(range);
-            }
-        }
-        
-        if (!ranges.size()) return;
-        
-        
-        std::sort(ranges.begin(), ranges.end(), compareSimpleOccurrences);
-        
-        std::set<TimeInterval> freeRanges;
-        
-        //scan for free sessions in the future
-        TimelineMarker* markerPrev = static_cast<TimelineMarker*>(this->getMarker(cuttingTime));
-        const QDateTime& futureBound = ranges.last()->end;
-        while (true){
-            TimelineMarker* marker = static_cast<TimelineMarker*>(this->getNextMarker());
-            if (markerPrev == nullptr || markerPrev->action() == nullptr){
-                QDateTime rangeStart = markerPrev == nullptr ? cuttingTime : std::max(cuttingTime, markerPrev->time());
-                QDateTime rangeEnd = marker == nullptr ? futureBound : std::min(marker->time(), futureBound);
-                freeRanges.insert(TimeInterval(rangeStart, rangeEnd));
-            }
-            if (marker == nullptr || marker->time() >= futureBound) break;
-            markerPrev = marker;
-        }
-        
-        freeRanges.insert(TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
-        
-        for (SimpleOccurrence* range:ranges){
-            while (range->requirement){
-                std::set<TimeInterval>::iterator firstFreeIt = freeRanges.upper_bound(TimeInterval(this->timeOrigin(), range->start));
-                TimeInterval firstFree = *firstFreeIt;
-                if (firstFree.start >= range->end) {
-                    this->m_impossibleConditions.push(range->occurrence);
-                    range->occurrence->setImpossible(true);
-                    break;
-                }
-                else if (firstFree.start < range->start){
-                    freeRanges.erase(firstFreeIt);
-                    freeRanges.insert(TimeInterval(firstFree.start, range->start));
-                    freeRanges.insert(TimeInterval(range->start, firstFree.end));
-                    continue;
-                }
-                else {
-                    if (firstFree.start > range->start){
-                        range->start = firstFree.start;
-                    }
-                    Int rangeLength = range->start.secsTo(range->end) / 60;
-                    if (rangeLength < range->requirement){
-                        range->requirement = rangeLength;
-                        this->m_impossibleConditions.push(range->occurrence);
-                        range->occurrence->setImpossible(true);
-                    }
-                    Int length = firstFree.start.secsTo(firstFree.end) / 60;
-                    if (length <= range->requirement){
-                        range->start = firstFree.end;
-                        range->requirement -= length;
-                        freeRanges.erase(firstFreeIt);
-                        continue;
-                    }
-                    else {
-                        freeRanges.erase(firstFreeIt);
-                        freeRanges.insert(TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
-                        break;
-                    }
-                }
-            }
-            //if (this->m_impossibleCondition != nullptr) break;
-        }
-        
-        for (SimpleOccurrence* range:ranges){
-            delete range;
-        }
-        
-        /*
-        for (QObject* object:occurrenceList.getData()){
-            Occurrence* occurrence = static_cast<Occurrence*>(object);
-            qDebug() << occurrence->startTime() << occurrence->endTime() << occurrence->plan()->name();
-            for (int i = 0; i < occurrence->status.size(); i++){
-                qDebug() << (static_cast<Objective*>(occurrence->plan()->objectives()->at(i))->action()->name()) << this->minutesToString(occurrence->status[i]);
-            }
-        }
-        */ 
-        
-        
-        
-        std::chrono::steady_clock::time_point _end = std::chrono::steady_clock::now();
-        
-        qDebug() << "Time Elapsed for Condition Check = " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _begin).count();
     }
     
     QObject* Engine::impossibleConditions()
     {
         this->occurrences();
         return &this->m_impossibleConditions;
+    }
+    
+    Int Engine::getFreeTime(Int rangeID)
+    {
+        this->occurrences();
+        return this->m_freeTime[rangeID];
+    }
+    
+    Float Engine::getFreeTimePercentage(Int rangeID)
+    {
+        this->occurrences();
+        return (Float)this->m_freeTime[rangeID] / (Float)(this->m_freeTimeCheckRanges[rangeID] * 1440);
     }
 
     /*

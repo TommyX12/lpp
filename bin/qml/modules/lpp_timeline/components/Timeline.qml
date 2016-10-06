@@ -1004,7 +1004,6 @@ Item {
     }
     
     function finishEdit(){
-        //Engine.updateOccurrences();
         autoAutoPlan();
         Engine.save();
         refresh();

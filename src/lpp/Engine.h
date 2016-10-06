@@ -197,14 +197,18 @@ namespace LPP
         QObjectVector* occurrences();
         void extractAllOccurrences(QDateTime, QDateTime, QObjectVector&, bool = false);
         void extractOccurrence(Plan*, const QDateTime&, const Int64&, const QDateTime&, QObjectVector&, bool, const QDateTime&);
-        void checkConflicts();
         
         static bool compareMissionPoints(MissionPoint*, MissionPoint*);
         static bool compareSimpleOccurrences(SimpleOccurrence*, SimpleOccurrence*);
+        static bool compareSimpleOccurrencesBack(SimpleOccurrence*, SimpleOccurrence*);
         
         void checkConditions(QObjectVector&);
+        void checkProgress(QObjectVector&, const QDateTime&, bool, bool);
         
         Q_INVOKABLE QObject* impossibleConditions();
+        
+        Q_INVOKABLE Int getFreeTime(Int);
+        Q_INVOKABLE Float getFreeTimePercentage(Int);
         
     private:
         //Action* m_test;
@@ -246,6 +250,9 @@ namespace LPP
         QObjectVector m_impossibleConditions;
         
         bool m_noAutoDelete;
+        
+        QVector<Int> m_freeTimeCheckRanges;
+        QVector<Int> m_freeTime;
         
     public slots:
         
