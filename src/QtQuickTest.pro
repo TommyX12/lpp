@@ -133,4 +133,5 @@ DISTFILES += \
     ../bin/qml/modules/lpp_missions/components/editors/AttachedPlanItem.qml \
     ../bin/qml/modules/lpp_missions/components/editors/AttachedPlanWindow.qml \
     ../bin/qml/modules/lpp_missions/components/editors/RepeatSelector.qml \
-    ../bin/qml/modules/lpp_timeline/components/AdjustWindow.qml
+    ../bin/qml/modules/lpp_timeline/components/AdjustWindow.qml \
+    ../bin/qml/modules/lpp_timeline/components/MissionList.qml

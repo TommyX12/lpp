@@ -57,31 +57,47 @@ Item {
         
         var now = Engine.limitTimePrecision(Engine.currentTime());
         
-        var i, occurrence;
+        var i = 0, occurrence = null;
         
-        pastList.clear();
-        activeList.clear();
-        upcomingList.clear();
+        pastList.list.clear();
+        activeList.list.clear();
+        upcomingList.list.clear();
+        
+        var alerts = [0,0,0,0,0,0,0,0,0];
+        
         
         for (i = 0; i < occurrences.size; i++){
             occurrence = occurrences.at(i);
             
-            if (occurrence.startTime >= Engine.autoplanMax) break;
-            
             if (occurrence.endTime <= now){
-                pastList.add(occurrence);
+                pastList.list.add(occurrence);
+                if (occurrence.impossible) alerts[2]++;
+                else if (occurrence.progress < 1.0) alerts[1]++;
+                else alerts[0]++;
             }
             else if (occurrence.startTime > now){
-                upcomingList.add(occurrence);
+                if (occurrence.startTime < Engine.autoplanMax) {
+                    upcomingList.list.add(occurrence);
+                }
+                if (occurrence.impossible) alerts[8]++;
+                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) alerts[7]++;
+                else alerts[6]++;
             }
             else {
-                activeList.add(occurrence);
+                activeList.list.add(occurrence);
+                if (occurrence.impossible) alerts[5]++;
+                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) alerts[4]++;
+                else alerts[3]++;
             }
         }
         
-        pastList.refresh();
-        activeList.refresh();
-        upcomingList.refresh();
+        pastList.list.refresh();
+        activeList.list.refresh();
+        upcomingList.list.refresh();
+        
+        pastList.updateTxt(alerts[0], alerts[1], alerts[2]);
+        activeList.updateTxt(alerts[3], alerts[4], alerts[5]);
+        upcomingList.updateTxt(alerts[6], alerts[7], alerts[8]);
         
         for (i = 0; i < freeTimeTxts.length; ++i){
             var freeTime = Engine.getFreeTime(i);
@@ -101,7 +117,7 @@ Item {
             return "#3333DD";
         }
         else if (percentage > 0.0){
-            return "#e89600";
+            return "#e8a200";
         }
         else {
             return "#DD3333";
@@ -151,46 +167,53 @@ Item {
             GroupBox {
                 title: qsTr("Past Missions")
                 Layout.minimumWidth: 100
+                Layout.maximumWidth: 65536
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 100
                 Layout.maximumHeight: 65536
+                width: 10
+                height: 10
                 
-                PooledList {
+                MissionList {
                     id: pastList
-                    objItemComponent: occItem_comp
-                    objItemHeight: occItemHeight
                     anchors.fill: parent
+                    occItem_comp: occItem_comp
+                    occItemHeight: occItemHeight
                 }
             }
             GroupBox {
                 title: qsTr("Active Missions")
                 Layout.minimumWidth: 100
+                Layout.maximumWidth: 65536
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 100
                 Layout.maximumHeight: 65536
+                width: 10
+                height: 10
                 
-                PooledList {
+                MissionList {
                     id: activeList
-                    objItemComponent: occItem_comp
-                    objItemHeight: occItemHeight
                     anchors.fill: parent
+                    occItem_comp: occItem_comp
+                    occItemHeight: occItemHeight
                 }
             }
             GroupBox {
                 title: qsTr("Upcoming Missions")
                 Layout.minimumWidth: 100
+                Layout.maximumWidth: 65536
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 100
                 Layout.maximumHeight: 65536
                 
-                PooledList {
+                MissionList {
                     id: upcomingList
-                    objItemComponent: occItem_comp
-                    objItemHeight: occItemHeight
                     anchors.fill: parent
+                    occItem_comp: occItem_comp
+                    occItemHeight: occItemHeight
                 }
             }
         }

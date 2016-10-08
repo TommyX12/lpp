@@ -38,6 +38,8 @@ when things don't fucking work for no fucking reason:
     a const pointer / reference cannot have its methods called, since that might change the content.
     If you are using multiple inheritance, moc assumes that the first inherited class is a subclass of QObject. 
         Also, be sure that only the first inherited class is a QObject.
+        
+    !!!sometimes a qml loop with too many variables in "if" will set one of them to i after loop. currently no solution. use array instead.
 
 to deploy qt quick:
     cd navigate to Qt\5.6\mingw49_32\bin, run windeployqt.exe --qmldir [path to source qml files] [binary exe path]
