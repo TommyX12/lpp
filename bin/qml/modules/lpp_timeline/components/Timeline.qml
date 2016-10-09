@@ -26,7 +26,7 @@ Item {
     
     property real maxViewRadius: dayLength * 2;
     property real marginBias: hourLength;
-    property real loadedRadius: 5 * dayLength / 2;
+    property real loadedRadius: 8 * dayLength / 2;
     property real moveSpeedMul: 1;
     property real zoomSpeedMul: 4;
     
@@ -69,6 +69,7 @@ Item {
     property real oldBegin;
     property real oldEnd;
     property var editingAction: null;
+    property bool editingAuto: false;
     
     property int editType: 0;
     
@@ -81,6 +82,8 @@ Item {
     property real snapMarkerRange: minuteLength * 80 / cameraZoom;
     property real snapTimeRange: minuteLength * 40 / cameraZoom;
     property real snapTimeInterval: minuteLength * 15;
+    
+    property real wheelStep: minuteLength * 6 / cameraZoom
     
     property var timeFrameLimit: dayLength * 3650; 
     
@@ -249,6 +252,8 @@ Item {
         editing = true;
         editType = 0;
         
+        editingAuto = false;
+        
         snapNow = Qt.binding(function(){return snapNowBox.checked});
         snapMarker = Qt.binding(function(){return snapMarkerBox.checked});
         snapTime = Qt.binding(function(){return snapTimeBox.checked});
@@ -378,6 +383,7 @@ Item {
         startEdit(marker.action, false)
         
         editType = 1;
+        editingAuto = marker.isAuto;
         
         editBegin = oldBegin = marker.time.getTime();
         editEnd = oldEnd = nextMarker.time.getTime();
@@ -581,7 +587,7 @@ Item {
             }
             
             Button {
-                text: editType == 0 ? qsTr("Draw") : qsTr("Save as Normal Session")
+                text: editType == 0 ? qsTr("Draw") : (editingAuto ? qsTr("Save as Normal Session") : qsTr("Save"))
                 Layout.fillWidth: true
                 Layout.minimumWidth: 10
                 Layout.maximumWidth: 65536
@@ -1216,6 +1222,9 @@ Item {
                     else if (Math.abs(event.x - curX) > moveThreshold) moveMode = 2;
                 }
             }
+        }
+        onWheel: function (event){
+            moveCamera(- event.angleDelta.y * wheelStep, 0);
         }
     }
     

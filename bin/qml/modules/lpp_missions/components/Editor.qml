@@ -9,23 +9,16 @@ import modules.lpp_utils 1.0
 
 import "editors"
 
-PageView {
+ColumnLayout {
     id: editor
     
-    /*
-    TODO:
-        make sure to catch all changes into dirty flag.    
-        display full path of item in an editor entry
-      */
+    property string title: qsTr("Editor");
     
-    property string title: currentItem.title;
-    
-        
     property alias folderEditor: folderEditor;
     property alias actionEditor: actionEditor;
     property alias planEditor: planEditor;
     
-    anchors.fill: parent
+    property alias currentItem: pageView.currentItem;
     
     Component.onCompleted: {
         mainWindow.moduleChange.connect(onModuleChange);
@@ -37,15 +30,15 @@ PageView {
     
     function load(item){
         if (item.type == "action"){
-            show(actionEditor);
+            pageView.show(actionEditor);
             actionEditor.load(item);
         }
         else if (item.type == "folder"){
-            show(folderEditor);
+            pageView.show(folderEditor);
             folderEditor.load(item);
         }
         else if (item.type == "plan"){
-            show(planEditor);
+            pageView.show(planEditor);
             planEditor.load(item);
         }
     }
@@ -68,34 +61,76 @@ PageView {
         }
     }
     
-    Item {
-        MessageDialog {
-            property var nextItem: null;
-            
-            id: messageBox_saveChanges
-            title: qsTr("Save Changes")
-            text: qsTr("Would you like to save the changes?")
-            icon: StandardIcon.Question
-            standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel;
-            
-            onAccepted: {
-                currentItem.save();
-            }
-            onDiscard: {
-                load(nextItem);
-            }
+    MessageDialog {
+        property var nextItem: null;
+        
+        id: messageBox_saveChanges
+        title: qsTr("Save Changes")
+        text: qsTr("Would you like to save the changes?")
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel;
+        
+        onAccepted: {
+            currentItem.save();
+        }
+        onDiscard: {
+            load(nextItem);
         }
     }
     
-    ActionEditor {
-        id: actionEditor;
+    RowLayout {
+        Layout.minimumWidth: 100
+        Layout.maximumWidth: 65536
+        Layout.fillWidth: true
+        
+        spacing: 10
+        
+        Button {
+            text: qsTr("Back")
+            
+            onClicked: {
+                currentItem.backAttempt();
+            }
+        }
+        
+        Label {
+            Layout.minimumWidth: 100
+            Layout.maximumWidth: 65536
+            Layout.fillWidth: true
+            width: 10
+            elide: Text.ElideMiddle
+            text: currentItem.title;
+            //horizontalAlignment: Text.AlignHCenter
+            font.bold: true;
+        }
     }
     
-    FolderEditor {
-        id: folderEditor;
-    }
-    
-    PlanEditor {
-        id: planEditor;
+    PageView {
+        id: pageView
+        /*
+        TODO:
+            make sure to catch all changes into dirty flag.    
+            display full path of item in an editor entry
+          */
+        
+        Layout.minimumWidth: 200
+        Layout.minimumHeight: 200
+        Layout.maximumWidth: 65536
+        Layout.maximumHeight: 65536
+        Layout.fillHeight: true
+        Layout.fillWidth: true
+        
+        
+        ActionEditor {
+            id: actionEditor;
+        }
+        
+        FolderEditor {
+            id: folderEditor;
+        }
+        
+        PlanEditor {
+            id: planEditor;
+        }
     }
 }

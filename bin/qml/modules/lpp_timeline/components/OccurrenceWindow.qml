@@ -135,12 +135,11 @@ ApplicationWindow {
                         var note = occurrence.plan.note;
                         if (occurrence.plan.parentFolder == null) note = occurrence.plan.objectives.at(0).action.note;
                         if (note.length == 0) return qsTr("(none)");
-                        note = note.split("\n");
-                        if (note.length > 1) note = note[0] + "\n...";
-                        else note = note[0];
-                        if (note.length > maxNoteChar) return note.substring(0, maxNoteChar) + "...";
-                        else return note;
+                        return note;
                     }
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 5
+                    elide: Text.ElideRight
                 }
                 
                 Label {

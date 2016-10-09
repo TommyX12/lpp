@@ -10,7 +10,7 @@ Item {
     
     
     
-    property string title: qsTr("Editor:  ") + currentItem.fullPath;
+    property string title: currentItem.fullPath;
     //property string subTitle;
     
     property Folder currentItem: null;
@@ -102,31 +102,9 @@ Item {
         }
     }
     
-    Button {
-        text: qsTr("Back")
-        
-        onClicked: {
-            backAttempt();
-        }
-    }
-    
     ColumnLayout {
     
         anchors.fill: parent
-        
-        RowLayout {
-            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-            Layout.fillWidth: true
-            
-            
-            Button {
-                text: qsTr("Back")
-                
-                onClicked: {
-                    backAttempt();
-                }
-            }
-        }
         
         GroupBox{
             title: qsTr("General")
