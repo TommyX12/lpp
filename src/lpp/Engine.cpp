@@ -1203,12 +1203,11 @@ namespace LPP
         delete marker;
         
         if (month->size() == 1){
+            this->m_monthModified[this->monthToKey(month)] = nullptr;
             
             this->m_timeline.remove(monthIndex);
             delete month->at(0);
             delete month;
-            
-            this->m_monthModified[this->monthToKey(month)] = nullptr;
         }
         else {
             this->m_monthModified[this->monthToKey(month)] = month;
