@@ -68,7 +68,8 @@ function clamp(x, min, max){
     return Math.min(Math.max(x, min), max);
 }
 
-function map(x, inMin, inMax, outMin, outMax){
+function map(x, inMin, inMax, outMin, outMax, clampIn){
+    if (clampIn === true) x = clamp(x, inMin, inMax);
     return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 }
 

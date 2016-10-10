@@ -495,8 +495,8 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     anchors.fill: parent
-                    text: editType == 0 ? qsTr("Left click and drag on the timeline to draw a session, then click 'Draw'.\nChoose 'None' to draw a free-session.") :
-                                          qsTr("Left click and drag on the timeline to draw new range for the session.\nClick on the action name to locate it in library.")
+                    text: editType == 0 ? qsTr("Left click and drag on the timeline to draw a static session, then click 'Draw'.\nChoose 'None' to draw an empty session (erase).") :
+                                          qsTr("Left click and drag on the timeline to set new range for the session.\nClick on the action name to locate it in library.")
                 }
             }
         
@@ -505,7 +505,7 @@ Item {
                 Layout.fillHeight: true
                 Layout.minimumHeight: 30
                 Layout.maximumHeight: 65536
-                title: qsTr("Operation");
+                title: qsTr("Action");
                 RowLayout {
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -513,7 +513,12 @@ Item {
                     Button {
                         text: qsTr("None")
                         enabled: timeline.editingAction != null;
-                        onClicked: timeline.editingAction = null;
+                        onClicked: {
+                            timeline.editingAction = null;
+                            if (editingAuto && Engine.globalSettings.autoAutoPlan){
+                                mainWindow.showWarning(qsTr("Warning"), qsTr("Auto session generation is currently enabled. If a dynamic session is erased, it will be filled back in instantly to complete missions. Delete the mission instead."));
+                            }
+                        }
                     }
                     Button {
                         text: qsTr("Select")
@@ -553,12 +558,10 @@ Item {
             }
             
             GroupBox {
-                Layout.minimumHeight: 40
-                Layout.maximumHeight: Layout.minimumHeight
                 Layout.fillWidth: true
                 title: qsTr("Snap");
                 RowLayout {
-                    anchors.centerIn: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
                     CheckBox{
                         id: snapNowBox
                         checked: true;
@@ -587,7 +590,7 @@ Item {
             }
             
             Button {
-                text: editType == 0 ? qsTr("Draw") : (editingAuto ? qsTr("Save as Normal Session") : qsTr("Save"))
+                text: editType == 0 ? qsTr("Draw") : ((editingAuto && editingAction != null) ? qsTr("Save as Static Session") : qsTr("Save"))
                 Layout.fillWidth: true
                 Layout.minimumWidth: 10
                 Layout.maximumWidth: 65536
@@ -845,7 +848,7 @@ Item {
         id: autoplanWindow
         minimumWidth: 360
         minimumHeight: 280
-        title: qsTr("Auto Draw")
+        title: qsTr("Generate Sessions")
         flags: Qt.Dialog;
         modality: Qt.WindowModal
         maximumHeight: minimumHeight
@@ -876,7 +879,7 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     anchors.fill: parent
-                    text: qsTr("Automatic planning will attempt to complete as many missions in the future as possible by filling free-sessions.\nThe planning range is between now and %1 days in the future.\nSessions drawn automatically will be erased by default on the next auto draw.").arg(planningDays);
+                    text: qsTr("This system will attempt to complete as many missions in the future as possible by drawing dynamic sessions around static sessions between now and %1 days in the future.\nExisting dynamic sessions will be modified while static sessions stay where they are.").arg(planningDays);
                 }
             }
             
@@ -895,7 +898,7 @@ Item {
                     
                     CheckBox{
                         id: autoAutoPlanBox
-                        text: qsTr("Always perform auto planning after timeline changes")
+                        text: qsTr("Automatically generate after timeline / mission changes")
                         checked: Engine.globalSettings.autoAutoPlan;
                         onClicked: {
                             Engine.globalSettings.autoAutoPlan = checked;
@@ -911,7 +914,7 @@ Item {
                         Layout.minimumWidth: 10
                         Layout.maximumWidth: 65536
                         
-                        text: qsTr("Default Auto Draw")
+                        text: qsTr("Generate Dynamic Sessions")
                         
                         enabled: !Engine.globalSettings.autoAutoPlan
                         
@@ -927,7 +930,7 @@ Item {
                         Layout.minimumWidth: 10
                         Layout.maximumWidth: 65536
                         
-                        text: qsTr("Fill Free-Sessions Only")
+                        text: qsTr("Fill Empty Sessions Only")
                         
                         enabled: !Engine.globalSettings.autoAutoPlan
                         
@@ -947,7 +950,7 @@ Item {
                         Layout.minimumWidth: 10
                         Layout.maximumWidth: 65536
                         
-                        text: qsTr("Erase Automatically-Drawn Future Sessions")
+                        text: qsTr("Erase Future Dynamic Sessions")
                         
                         enabled: !Engine.globalSettings.autoAutoPlan
                         
@@ -1044,9 +1047,9 @@ Item {
     }
     
     function refresh(){
-        
-        loadedRangeBegin = cameraTime - loadedRadius;
-        loadedRangeEnd = cameraTime + loadedRadius;
+        var viewCenter = (topTime + bottomTime) / 2;
+        loadedRangeBegin = viewCenter - loadedRadius;
+        loadedRangeEnd = viewCenter + loadedRadius;
         
         var i, marker;
         
@@ -1103,7 +1106,7 @@ Item {
         
         for (i = 0; i < numBlocks; i++){
             var block = blockPool[i];
-            block.y = Utils.map(block.time, topTime, bottomTime, 0, timeline.height);
+            block.y = Utils.map(block.time, topTime, bottomTime, 0, timeline.height, true);
             if (i > 0){
                 var prevBlock = blockPool[i-1];
                 prevBlock.height = block.y - prevBlock.y;
@@ -1124,8 +1127,8 @@ Item {
         }
         
         if (editing){
-            editBlock.y = Utils.map(Math.min(editBegin, editEnd), topTime, bottomTime, 0, timeline.height);
-            editBlock.height = Utils.map(Math.max(editBegin, editEnd), topTime, bottomTime, 0, timeline.height) - editBlock.y;
+            editBlock.y = Utils.map(Math.min(editBegin, editEnd), topTime, bottomTime, 0, timeline.height, true);
+            editBlock.height = Utils.map(Math.max(editBegin, editEnd), topTime, bottomTime, 0, timeline.height, true) - editBlock.y;
             editBlock.reposition();
         }
     }

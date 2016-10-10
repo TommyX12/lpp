@@ -16,9 +16,7 @@ Dialog {
         for (i = 0; i < currentFolder.actions.size; i++){
             item = currentFolder.actions.at(i);
             if (item.name == txt.text){
-                mainWindow.messageBox_error.title = qsTr("Name Conflict")
-                mainWindow.messageBox_error.text = qsTr("There is already one action with this name.")
-                mainWindow.messageBox_error.open();
+                mainWindow.showError(qsTr("Name Conflict"), qsTr("There is already one action with this name."));
                 return;
             }
         }
@@ -26,8 +24,7 @@ Dialog {
         var newAction = Engine.createAction(currentFolder, -1)
         //console.log(newAction.parentFolder.name);
         if (newAction == null) {
-            mainWindow.messageBox_error.text = qsTr("Maximum number of actions reached.");
-            mainWindow.messageBox_error.open();
+            mainWindow.showError(qsTr("Error"), qsTr("Maximum number of actions reached."));
             return;
         }
         /*

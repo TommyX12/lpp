@@ -16,9 +16,7 @@ Dialog {
         for (i = 0; i < currentFolder.plans.size; i++){
             item = currentFolder.plans.at(i);
             if (item.name == txt.text){
-                mainWindow.messageBox_error.title = qsTr("Name Conflict")
-                mainWindow.messageBox_error.text = qsTr("There is already one mission with this name.")
-                mainWindow.messageBox_error.open();
+                mainWindow.showError(qsTr("Name Conflict"), qsTr("There is already one mission with this name."));
                 return;
             }
         }
@@ -26,8 +24,7 @@ Dialog {
         var newPlan = Engine.createPlan(currentFolder, -1)
         //console.log(newPlan.parentFolder.name);
         if (newPlan == null) {
-            mainWindow.messageBox_error.text = qsTr("Maximum number of missions reached.");
-            mainWindow.messageBox_error.open();
+            mainWindow.showError(qsTr("Error"), qsTr("Maximum number of missions reached."));
             return;
         }
         /*

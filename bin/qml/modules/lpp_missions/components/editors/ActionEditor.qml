@@ -54,9 +54,7 @@ Item {
         for (i = 0; i < currentItem.parentFolder.actions.size; i++){
             item = currentItem.parentFolder.actions.at(i);
             if (item != currentItem && item.name == name.text){
-                mainWindow.messageBox_error.title = qsTr("Name Conflict")
-                mainWindow.messageBox_error.text = qsTr("There is already one action with this name.")
-                mainWindow.messageBox_error.open();
+                mainWindow.showError(qsTr("Name Conflict"), qsTr("There is already one action with this name."));
                 return false;
             }
         }

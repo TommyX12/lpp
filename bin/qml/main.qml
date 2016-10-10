@@ -15,7 +15,7 @@ ApplicationWindow {
     property alias progressBar: progressBar
     property alias status: status;
     
-    property alias messageBox_error: messageBox_error;
+    property alias messageBox: messageBox;
     
     property var modules;
     
@@ -137,17 +137,24 @@ ApplicationWindow {
     }
     
     MessageDialog {
-        id: messageBox_error
+        id: messageBox
         title: ""
         text: ""
         icon: StandardIcon.Critical
         standardButtons: StandardButton.OK;
     }
     
+    function showWarning(title, text){
+        messageBox.icon = StandardIcon.Warning
+        messageBox.title = title;
+        messageBox.text = text;
+        messageBox.open();
+    }
     function showError(title, text){
-        messageBox_error.title = title;
-        messageBox_error.text = text;
-        messageBox_error.open();
+        messageBox.icon = StandardIcon.Critical
+        messageBox.title = title;
+        messageBox.text = text;
+        messageBox.open();
     }
     
     Component.onCompleted: function (){

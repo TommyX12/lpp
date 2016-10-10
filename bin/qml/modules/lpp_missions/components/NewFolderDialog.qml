@@ -16,9 +16,7 @@ Dialog {
         for (i = 0; i < currentFolder.folders.size; i++){
             item = currentFolder.folders.at(i);
             if (item.name == txt.text){
-                mainWindow.messageBox_error.title = qsTr("Name Conflict")
-                mainWindow.messageBox_error.text = qsTr("There is already one folder with this name.")
-                mainWindow.messageBox_error.open();
+                mainWindow.showError(qsTr("Name Conflict"), qsTr("There is already one folder with this name."));
                 return;
             }
         }
@@ -27,8 +25,7 @@ Dialog {
         //console.log(newFolder.parentFolder.name);
         ///*
         if (newFolder == null) {
-            mainWindow.messageBox_error.text = qsTr("Maximum number of folders reached.");
-            mainWindow.messageBox_error.open();
+            mainWindow.showError(qsTr("Error"), qsTr("Maximum number of folders reached."));
             return;
         }
         /*

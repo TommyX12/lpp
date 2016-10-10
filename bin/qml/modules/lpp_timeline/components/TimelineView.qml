@@ -153,10 +153,10 @@ ColumnLayout {
     
     RowLayout {
         SimpleButton {
-            Layout.minimumWidth: 50
+            Layout.minimumWidth: 30
             Layout.maximumWidth: 65536
             Layout.fillWidth: true
-            text: qsTr("Manual Draw")
+            text: qsTr("Draw")
             enabled: !timeline.editing
             onClicked: {
                 timeline.startEdit(null, true);
@@ -164,10 +164,21 @@ ColumnLayout {
         }
         
         SimpleButton {
-            Layout.minimumWidth: 50
+            Layout.minimumWidth: 30
             Layout.maximumWidth: 65536
             Layout.fillWidth: true
-            text: qsTr("Auto Draw")
+            text: qsTr("Erase")
+            enabled: !timeline.editing
+            onClicked: {
+                timeline.startEdit(null, false);
+            }
+        }
+        
+        SimpleButton {
+            Layout.minimumWidth: 40
+            Layout.maximumWidth: 65536
+            Layout.fillWidth: true
+            text: qsTr("Generate")
             enabled: !timeline.editing
             onClicked: {
                 timeline.autoPlan();
