@@ -28,6 +28,7 @@ namespace LPP
     extern QString e_timeStringDayFormat;
     extern QString e_timeStringMonthFormat;
     extern QString e_timeStringReadFullFormat;
+    extern QString e_timeStringMaskFormat;
     extern Int64 t_cleanUpThresholdSec;
     extern Int64 c_minuteMSec;
     extern Int64 c_hourMSec;

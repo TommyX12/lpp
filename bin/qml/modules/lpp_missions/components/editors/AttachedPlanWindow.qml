@@ -11,7 +11,7 @@ ApplicationWindow {
     visible: false
     id: window
     minimumWidth: 400
-    minimumHeight: 460
+    minimumHeight: 650
     title: qsTr("Edit Attached Mission")
     flags: Qt.Dialog;
     modality: Qt.WindowModal
@@ -44,6 +44,8 @@ ApplicationWindow {
         nameTxt.text = plan.name;
         
         nameTxt.focus = true;
+        
+        maskSelector.loadFromInstance(instance)
     }
     
     function save(){
@@ -69,6 +71,7 @@ ApplicationWindow {
         }
         
         if (!repeatSelector.saveToInstance()) return;
+        if (!maskSelector.saveToInstance()) return;
         
         objective.length = length;
         
@@ -115,7 +118,6 @@ ApplicationWindow {
         GroupBox {
             title: qsTr("Time Frame")
             Layout.fillWidth: true
-            Layout.fillHeight: true
             Layout.minimumWidth: 100
             Layout.maximumWidth: 65536
             IntervalSelector{
@@ -133,6 +135,26 @@ ApplicationWindow {
             Layout.maximumHeight: 65536
             RepeatSelector {
                 id: repeatSelector
+                anchors.fill: parent
+                anchors.topMargin: 5
+                anchors.bottomMargin: 5
+                anchors.leftMargin: 5
+                anchors.rightMargin: 5
+            }
+        }
+        
+        GroupBox {
+            title: qsTr("Canceled Occurrences")
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 50
+            Layout.maximumHeight: 65536
+            Layout.minimumWidth: 50
+            Layout.maximumWidth: 65536
+            width: 50
+            height: 50
+            MaskSelector {
+                id: maskSelector
                 anchors.fill: parent
                 anchors.topMargin: 5
                 anchors.bottomMargin: 5

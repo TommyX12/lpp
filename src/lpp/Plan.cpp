@@ -18,7 +18,6 @@ namespace LPP
         this->m_name = "";
         this->m_note = "";
         this->m_completionMode = 0;
-        this->m_permanent = true;
         this->updateFullPath();
     }
     
@@ -101,18 +100,6 @@ namespace LPP
         this->m_note = note;
         emit this->noteChanged();
         return this->m_note;
-    }
-    
-    bool Plan::permanent()
-    {
-        return this->m_permanent;
-    }
-    
-    bool Plan::setPermanent(bool permanent)
-    {
-        this->m_permanent = permanent;
-        emit this->permanentChanged();
-        return this->m_permanent;
     }
     
     void Plan::setParam(const QString& name, const QString& value)
@@ -230,7 +217,7 @@ namespace LPP
         newObject->setPlan(this);
         QDateTime current = Engine::current()->limitTimePrecision(Engine::current()->currentTime());
         newObject->setStartTime(current);
-        newObject->setEndTime(current.addSecs(3600));
+        newObject->setEndTime(current.addSecs(3600).toUTC());
         this->m_instances.push(newObject);
         
         
@@ -240,9 +227,9 @@ namespace LPP
     
     void Plan::deleteInstance(Instance* instance)
     {
-        Engine::current()->setOccurrencesChanged();
-        
         if (instance == nullptr) return;
+        
+        Engine::current()->setOccurrencesChanged();
         
         this->m_instances.remove(instance);
         

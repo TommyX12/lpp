@@ -60,6 +60,7 @@ ApplicationWindow {
     
     function getStatusTxt(){
         if (occurrence == null) return ""
+        else if (occurrence.canceled) return qsTr("Canceled")
         else if (occurrence.impossible) return occurrence.endTime <= Engine.currentTime() ? qsTr("Failed") : qsTr("Impossible without Causing Conflicts")
         else if (occurrence.progress < 1.0) return qsTr("Insufficient Planning")
         else if (occurrence.progressNow == 1.0) return qsTr("Completed")
@@ -69,6 +70,7 @@ ApplicationWindow {
     
     function getStatusColor(){
         if (occurrence == null) return "#000000"
+        else if (occurrence.canceled) return "#666666"
         else if (occurrence.impossible) return "#ff0000"
         else if (occurrence.progress < 1.0) return "#ee9922"
         else if (occurrence.progressNow == 1.0) return "#44bb44"
@@ -229,6 +231,29 @@ ApplicationWindow {
                 text: qsTr("Go to Occurrence on Timeline")
                 onClicked: {
                     root.timeline.setCamera(occurrence.startTime.getTime(), root.timeline.cameraZoom);
+                    
+                    window.close();
+                }
+            }
+            
+            SimpleButton {
+                Layout.minimumWidth: 50
+                Layout.maximumWidth: 65536
+                Layout.fillWidth: true
+                height: 30
+                enabled: occurrence != null && !occurrence.canceled
+                text: qsTr("Cancel this Occurrence")
+                onClicked: {
+                    var mask = occurrence.instance.getMask();
+                    var dateStr = occurrence.startTime.getUTCFullYear() + '/'
+                        + (occurrence.startTime.getUTCMonth()+1) + '/'
+                        + occurrence.startTime.getUTCDate()
+                    
+                    occurrence.instance.setMask(mask + '\n' + dateStr);
+                    
+                    Engine.savePlan(occurrence.plan);
+                    
+                    root.enter();
                     
                     window.close();
                 }

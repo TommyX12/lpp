@@ -14,6 +14,7 @@ namespace LPP
         this->m_plan = nullptr;
         this->m_instance = nullptr;
         this->m_impossible = false;
+        this->m_canceled = false;
         
         this->m_progress = this->m_progressNow = 0.0;
         
@@ -127,6 +128,18 @@ namespace LPP
         this->m_impossible = impossible;
         emit this->impossibleChanged();
         return this->m_impossible;
+    }
+    
+    bool Occurrence::canceled()
+    {
+        return this->m_canceled;
+    }
+    
+    bool Occurrence::setCanceled(bool canceled)
+    {
+        this->m_canceled = canceled;
+        emit this->canceledChanged();
+        return this->m_canceled;
     }
     
     Float Occurrence::progress()

@@ -64,18 +64,29 @@ Item {
         upcomingList.list.clear();
         
         var alerts = [0,0,0,0,0,0,0,0,0];
+        var canceled = [0,0,0];
         
         
         for (i = 0; i < occurrences.size; i++){
             occurrence = occurrences.at(i);
             
             if (occurrence.endTime <= now){
+                if (occurrence.canceled) {
+                    canceled[0]++;
+                    if (showCanceledBox.checked) pastList.list.add(occurrence);
+                    continue;
+                }
                 pastList.list.add(occurrence);
                 if (occurrence.impossible) alerts[2]++;
                 else if (occurrence.progress < 1.0) alerts[1]++;
                 else alerts[0]++;
             }
             else if (occurrence.startTime > now){
+                if (occurrence.canceled) {
+                    canceled[2]++;
+                    if (showCanceledBox.checked) upcomingList.list.add(occurrence);
+                    continue;
+                }
                 if (occurrence.startTime < Engine.autoplanMax) {
                     upcomingList.list.add(occurrence);
                 }
@@ -84,6 +95,11 @@ Item {
                 else alerts[6]++;
             }
             else {
+                if (occurrence.canceled) {
+                    canceled[1]++;
+                    if (showCanceledBox.checked) activeList.list.add(occurrence);
+                    continue;
+                }
                 activeList.list.add(occurrence);
                 if (occurrence.impossible) alerts[5]++;
                 else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) alerts[4]++;
@@ -95,9 +111,9 @@ Item {
         activeList.list.refresh();
         upcomingList.list.refresh();
         
-        pastList.updateTxt(alerts[0], alerts[1], alerts[2]);
-        activeList.updateTxt(alerts[3], alerts[4], alerts[5]);
-        upcomingList.updateTxt(alerts[6], alerts[7], alerts[8]);
+        pastList.updateTxt(alerts[0], alerts[1], alerts[2], canceled[0]);
+        activeList.updateTxt(alerts[3], alerts[4], alerts[5], canceled[1]);
+        upcomingList.updateTxt(alerts[6], alerts[7], alerts[8], canceled[2]);
         
         for (i = 0; i < freeTimeTxts.length; ++i){
             var freeTime = Engine.getFreeTime(i);
@@ -156,6 +172,15 @@ Item {
             font.bold: true
         }
         */
+        
+        CheckBox{
+            id: showCanceledBox
+            text: qsTr("Show Canceled Occurrences")
+            checked: false
+            onCheckedChanged: {
+                refreshOnChange();
+            }
+        }
         
         RowLayout {
             Layout.fillWidth: true

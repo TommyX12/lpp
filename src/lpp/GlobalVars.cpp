@@ -25,6 +25,7 @@ namespace LPP
     QString e_timeStringDayFormat = "dd HH:mm";
     QString e_timeStringMonthFormat = "MM-dd HH:mm";
     QString e_timeStringReadFullFormat = "yyyy-MM-dd ddd HH:mm:ss";
+    QString e_timeStringMaskFormat = "yyyy/M/d";
     Int64 t_cleanUpThresholdSec = 300;
     Int64 c_minuteMSec = 60000;
     Int64 c_hourMSec = 3600000;

@@ -47,6 +47,7 @@ Item {
             border.color: "grey"
             color: {
                 if (object == null) return "#000000"
+                else if (object.canceled) return "#ffffff"
                 else if (object.impossible) return "#ff0000"
                 else if (object.progress < 1.0) return "#eebb55"
                 else if (object.progressNow == 1.0) return "#44cc44"

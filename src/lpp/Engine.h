@@ -181,6 +181,8 @@ namespace LPP
         Q_INVOKABLE void setMarkerAction(TimelineMarker*, Action*, bool);
         void mergeMarkers(const QDateTime&);
         Q_INVOKABLE void refresh();
+        void autoDelete();
+        bool autoDeleteInstance(Instance*);
         Q_INVOKABLE bool drawTimelineRange(Action*, const QDateTime&, const QDateTime&, bool = false);
         Q_INVOKABLE void autoPlan(bool = false);
         Q_INVOKABLE void eraseAutoPlan();

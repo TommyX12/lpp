@@ -117,10 +117,10 @@ namespace LPP
         
         this->plans()->push(newPlan);
         
-        newPlan->createInstance();
+        Instance* instance = static_cast<Instance*>(newPlan->createInstance());
         newPlan->createObjective(this);
         
-        newPlan->setPermanent(false);
+        instance->setPermanent(false);
         
         return newPlan;
     }

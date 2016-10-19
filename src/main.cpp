@@ -39,6 +39,7 @@ when things don't fucking work for no fucking reason:
     If you are using multiple inheritance, moc assumes that the first inherited class is a subclass of QObject. 
         Also, be sure that only the first inherited class is a QObject.
         
+    !!!QDateTime addMSec method etc will RESET THE FUCKING TIMESPEC FUCK YOU 
     !!!sometimes a qml loop with too many variables in "if" will set one of them to i after loop. currently no solution. use array instead.
 
 to deploy qt quick:
@@ -237,7 +238,8 @@ class ApplicationEngine : public QQmlApplicationEngine
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
+   
+    
     ApplicationEngine engine;
     LPP::registerQtTypes();
     LPP::registerQtClasses();

@@ -26,6 +26,40 @@ namespace LPP
 {
 
     Engine* Engine::m_current = nullptr;
+    
+    struct TimeInterval
+    {
+        QDateTime start, end;
+        TimeInterval(const QDateTime& start, const QDateTime& end){
+            this->start = start;
+            this->end = end;
+        };
+        bool operator<(const TimeInterval& b) const
+        {
+            return this->end < b.end;
+        };
+        bool operator==(const TimeInterval& b) const
+        {
+            return this->end == b.end;
+        };
+    };
+    
+    struct ReversedTimeInterval
+    {
+        QDateTime start, end;
+        ReversedTimeInterval(const QDateTime& start, const QDateTime& end){
+            this->start = start;
+            this->end = end;
+        };
+        bool operator<(const ReversedTimeInterval& b) const
+        {
+            return this->end > b.end;
+        };
+        bool operator==(const ReversedTimeInterval& b) const
+        {
+            return this->end == b.end;
+        };
+    };
 
     void registerQtClasses()
     {
@@ -419,8 +453,6 @@ namespace LPP
         
         newPlan->setID(id);
         newPlan->setParentFolder(parentFolder);
-        
-        newPlan->setPermanent(true);
         
         parentFolder->plans()->push(newPlan);
         
@@ -930,8 +962,8 @@ namespace LPP
             }
         }
         
-        this->setTimelineMin(std::max(this->timeOrigin(), this->currentTime().addYears(-t_maxPastYears)));
-        this->setTimelineMax(this->currentTime().addYears(t_maxFutureYears));
+        this->setTimelineMin(std::max(this->timeOrigin(), this->currentTime().addYears(-t_maxPastYears).toUTC()));
+        this->setTimelineMax(this->currentTime().addYears(t_maxFutureYears).toUTC());
         
         QDir timelineDir(this->savePath + e_timelineFileName);
         
@@ -1277,15 +1309,20 @@ namespace LPP
     
     void Engine::refresh()
     {
-        this->setTimelineMax(this->currentTime().addYears(t_maxFutureYears));
+        this->setTimelineMax(this->currentTime().addYears(t_maxFutureYears).toUTC());
         
-        this->setPlanningMax(this->currentTime().addDays(t_maxPlanningDays));
-        this->setAutoplanMax(this->currentTime().addDays(t_maxAutoplanDays));
+        this->setPlanningMax(this->currentTime().addDays(t_maxPlanningDays).toUTC());
+        this->setAutoplanMax(this->currentTime().addDays(t_maxAutoplanDays).toUTC());
         
-        this->setPastMax(std::max(this->pastMax(), this->currentTime().addDays(-t_maxPastDays)));
+        this->setPastMax(std::max(this->pastMax(), this->currentTime().addDays(-t_maxPastDays).toUTC()));
         
         this->setTimeChanged();
         
+        this->autoDelete();
+    }
+    
+    void Engine::autoDelete()
+    {
         if (!this->m_noAutoDelete){
             for (Action* action:this->m_actions){
                 if (action != nullptr){
@@ -1293,17 +1330,9 @@ namespace LPP
                     for (int i = 0; i < action->plans()->size(); i++){
                         Plan* plan = static_cast<Plan*>(action->plans()->at(i));
                         
-                        if (plan->permanent()) continue;
-                        
                         Instance* instance = static_cast<Instance*>(plan->instances()->at(0));
-                        bool needsRemove = false;
-                        if (instance->repeatMode() == "none"){
-                            if (instance->endTime() <= this->pastMax()) needsRemove = true;
-                        } 
-                        else if (!instance->isForever()){
-                            if (instance->repeatUntil().addMSecs(instance->startTime().msecsTo(instance->endTime())) <= this->pastMax()) needsRemove = true;
-                        }
-                        if (needsRemove){
+                        
+                        if (this->autoDeleteInstance(instance)){
                             objectDeleted(plan);
                             action->plans()->remove(i);
                             i--;
@@ -1313,7 +1342,70 @@ namespace LPP
                     if (modified) this->saveAction(action);
                 }
             }
+            for (Plan* plan:this->m_plans){
+                if (plan != nullptr){
+                    bool modified = false;
+                    for (int i = 0; i < plan->instances()->size(); i++){
+                        Instance* instance = static_cast<Instance*>(plan->instances()->at(i));
+                        
+                        if (this->autoDeleteInstance(instance)){
+                            plan->instances()->remove(i);
+                            i--;
+                            modified = true;
+                        }
+                    }
+                    if (modified) this->savePlan(plan);
+                }
+            }
         }
+    }
+    
+    bool Engine::autoDeleteInstance(Instance* instance)
+    {
+        
+        bool maskModified = false;
+        
+        QVector<QPair<QDateTime, QDateTime>> maskData = instance->getMaskData();
+        
+        for (int i = 0; i < maskData.size(); ++i){
+            auto mask = maskData[i];
+            if (mask.second <= this->pastMax()){
+                maskData.remove(i);
+                --i;
+                maskModified = true;
+            }
+        }
+        
+        if (maskModified){
+            QString outStr;
+            for (auto mask:maskData){
+                if (mask.first.msecsTo(mask.second) == c_dayMSec){
+                    outStr += mask.first.toString(e_timeStringMaskFormat) + '\n';
+                }
+                else {
+                    outStr += mask.first.toString(e_timeStringMaskFormat) + " - " + 
+                            mask.second.addMSecs(-c_dayMSec).toUTC().toString(e_timeStringMaskFormat) + '\n';
+                }
+            }
+            instance->setMask(outStr);
+        }
+        
+        if (instance->permanent()) return false;
+            
+        if (instance->repeatMode() == "none"){
+            if (instance->endTime() <= this->pastMax()) {
+                static_cast<Plan*>(instance->plan())->deleteInstance(instance);
+                return true;
+            }
+        } 
+        else if (!instance->isForever()){
+            if (instance->repeatUntil().addMSecs(instance->startTime().msecsTo(instance->endTime())).toUTC() <= this->pastMax()) {
+                static_cast<Plan*>(instance->plan())->deleteInstance(instance);
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     bool Engine::drawTimelineRange(Action* action, const QDateTime& _start, const QDateTime& _end, bool isAuto)
@@ -1356,40 +1448,6 @@ namespace LPP
         return true;
     }
     
-    struct TimeInterval
-    {
-        QDateTime start, end;
-        TimeInterval(const QDateTime& start, const QDateTime& end){
-            this->start = start;
-            this->end = end;
-        };
-        bool operator<(const TimeInterval& b) const
-        {
-            return this->end < b.end;
-        };
-        bool operator==(const TimeInterval& b) const
-        {
-            return this->end == b.end;
-        };
-    };
-    
-    struct ReversedTimeInterval
-    {
-        QDateTime start, end;
-        ReversedTimeInterval(const QDateTime& start, const QDateTime& end){
-            this->start = start;
-            this->end = end;
-        };
-        bool operator<(const ReversedTimeInterval& b) const
-        {
-            return this->end > b.end;
-        };
-        bool operator==(const ReversedTimeInterval& b) const
-        {
-            return this->end == b.end;
-        };
-    };
-    
     void Engine::autoPlan(bool freeSessionsOnly)
     {
         if (!this->m_autoplanDesynced) {
@@ -1416,6 +1474,8 @@ namespace LPP
         
         for (QObject* object:occurrenceList.getData()){
             Occurrence* occurrence = static_cast<Occurrence*>(object);
+            
+            if (occurrence->canceled()) continue;
             
             if (occurrence->startTime() >= this->m_autoplanMax) continue;
             
@@ -1475,7 +1535,7 @@ namespace LPP
             
             //qDebug() << "here";
             
-            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
+            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60).toUTC(), futureBound.addSecs(120).toUTC()));
             
             for (SimpleOccurrence* range:ranges){
                 while (range->requirement){
@@ -1509,9 +1569,9 @@ namespace LPP
                             continue;
                         }
                         else {
-                            this->drawTimelineRange(range->action, firstFree.start, std::min(this->m_autoplanMax, firstFree.start.addSecs((Int64)range->requirement * 60)), true);
+                            this->drawTimelineRange(range->action, firstFree.start, std::min(this->m_autoplanMax, firstFree.start.addSecs((Int64)range->requirement * 60).toUTC()), true);
                             std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
-                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
+                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60).toUTC(), firstFree.end));
                             break;
                         }
                     }
@@ -1697,6 +1757,9 @@ namespace LPP
             for (QObject* object:plan->instances()->getData()){
                 Instance* instance = static_cast<Instance*>(object);
                 
+                int maskPtr = 0;
+                const QVector<QPair<QDateTime, QDateTime>>& maskData = instance->getMaskData();
+                
                 Int64 length = instance->startTime().msecsTo(instance->endTime());
                 Int jumpMethod = 0;
                 //Int64 repeatGap = 0;
@@ -1711,14 +1774,14 @@ namespace LPP
                     Int64 diff = beginMSec - length - instance->startTime().toMSecsSinceEpoch();
                     Int64 jumps = diff / gap + 1;
                     diff = jumps * gap;
-                    firstStartTime = instance->startTime().addMSecs(diff);
+                    firstStartTime = instance->startTime().addMSecs(diff).toUTC();
                     
                     jumpMethod = 1;
                 }
                 else if (instance->repeatMode() == "months"){
                     Int gap = instance->repeatParam();
                     
-                    QDateTime minBegin = begin.addMSecs(-length);
+                    QDateTime minBegin = begin.addMSecs(-length).toUTC();
                     Int diff = this->toMonthNumber(minBegin.date()) - instanceStartMonth;
                     Int jumps = diff / gap;
                     if (jumps * gap < diff) jumps++;
@@ -1740,7 +1803,7 @@ namespace LPP
                 else if (instance->repeatMode() == "years"){
                     Int gap = instance->repeatParam();
                     
-                    QDateTime minBegin = begin.addMSecs(-length);
+                    QDateTime minBegin = begin.addMSecs(-length).toUTC();
                     Int diff = minBegin.date().year() - instanceStartDate.year();
                     Int jumps = diff / gap;
                     if (jumps * gap < diff) jumps++;
@@ -1767,12 +1830,25 @@ namespace LPP
                     bool isForever = instance->isForever();
                     while (firstStartTime < end && (isForever || firstStartTime <= instance->repeatUntil())){
                         //make an occurrence
-                        //qDebug() << firstStartTime << firstStartTime.addMSecs(length) << (static_cast<Plan*>(instance->plan())->name());
+                        //qDebug() << firstStartTime << firstStartTime.addMSecs(length).toUTC() << (static_cast<Plan*>(instance->plan())->name());
+                        
                         Occurrence* occurrence = new Occurrence();
                         QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
                         
+                        if (maskPtr < maskData.size()){
+                            if (firstStartTime < maskData[maskPtr].second){
+                                if (firstStartTime >= maskData[maskPtr].first) occurrence->setCanceled(true);
+                            }
+                            else {
+                                while (true){
+                                    maskPtr++;
+                                    if (maskPtr >= maskData.size() || firstStartTime < maskData[maskPtr].second) break;
+                                }
+                            }
+                        }
+                        
                         occurrence->setStartTime(firstStartTime);
-                        occurrence->setEndTime(firstStartTime.addMSecs(length));
+                        occurrence->setEndTime(firstStartTime.addMSecs(length).toUTC());
                         occurrence->setPlan(plan);
                         occurrence->setInstance(instance);
                         occurrence->status.fill(0, numObjectives);
@@ -1797,14 +1873,27 @@ namespace LPP
                         }
                     }
                 }
-                else if (firstStartTime.addMSecs(length) > begin && firstStartTime < end) {
+                else if (firstStartTime.addMSecs(length).toUTC() > begin && firstStartTime < end) {
                     //make an occurrence
-                    //qDebug() << firstStartTime << firstStartTime.addMSecs(length) << (static_cast<Plan*>(instance->plan())->name());
+                    //qDebug() << firstStartTime << firstStartTime.addMSecs(length).toUTC() << (static_cast<Plan*>(instance->plan())->name());
+                    
                     Occurrence* occurrence = new Occurrence();
                     QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
                     
+                    if (maskPtr < maskData.size()){
+                        if (firstStartTime < maskData[maskPtr].second){
+                            if (firstStartTime >= maskData[maskPtr].first) occurrence->setCanceled(true);
+                        }
+                        else {
+                            while (true){
+                                maskPtr++;
+                                if (maskPtr >= maskData.size() || firstStartTime < maskData[maskPtr].second) break;
+                            }
+                        }
+                    }
+                    
                     occurrence->setStartTime(firstStartTime);
-                    occurrence->setEndTime(firstStartTime.addMSecs(length));
+                    occurrence->setEndTime(firstStartTime.addMSecs(length).toUTC());
                     occurrence->setPlan(plan);
                     occurrence->setInstance(instance);
                     occurrence->status.fill(0, numObjectives);
@@ -1862,6 +1951,8 @@ namespace LPP
         for (QObject* object:occurrenceList.getData()){
             Occurrence* occurrence = static_cast<Occurrence*>(object);
             
+            if (occurrence->canceled()) continue;
+            
             if (occurrence->minRequirement()){
                 SimpleOccurrence* rangeBack = new SimpleOccurrence(std::max(occurrence->startTime(), cuttingTime), occurrence->endTime(), occurrence->minRequirement(), occurrence, 0);
                 
@@ -1875,7 +1966,7 @@ namespace LPP
         std::set<ReversedTimeInterval> freeRangesBack;
         
         //scan for auto-plannable sessions in the future
-        QDateTime futureBound = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[this->m_freeTimeCheckRanges.size()-1] * c_dayMSec);
+        QDateTime futureBound = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[this->m_freeTimeCheckRanges.size()-1] * c_dayMSec).toUTC();
         
         if (rangesBack.size()) futureBound = std::max(rangesBack.first()->end, futureBound);
         
@@ -1891,7 +1982,7 @@ namespace LPP
             markerPrev = marker;
         }
         
-        freeRangesBack.insert(freeRangesBack.end(), ReversedTimeInterval(cuttingTime.addSecs(-60), cuttingTime.addSecs(-120)));
+        freeRangesBack.insert(freeRangesBack.end(), ReversedTimeInterval(cuttingTime.addSecs(-60).toUTC(), cuttingTime.addSecs(-120).toUTC()));
         
         
         if (rangesBack.size()) {
@@ -1927,7 +2018,7 @@ namespace LPP
                         }
                         else {
                             std::set<ReversedTimeInterval>::iterator hint = freeRangesBack.erase(firstFreeIt);
-                            freeRangesBack.insert(hint, ReversedTimeInterval(firstFree.start.addSecs(-(Int64)range->requirement * 60), firstFree.end));
+                            freeRangesBack.insert(hint, ReversedTimeInterval(firstFree.start.addSecs(-(Int64)range->requirement * 60).toUTC(), firstFree.end));
                             break;
                         }
                     }
@@ -1954,7 +2045,7 @@ namespace LPP
         QDateTime* freeTimeCheckRangeEnds = new QDateTime[numCheckRanges + 1];
         
         for (int i = 0; i < numCheckRanges; ++i){
-            freeTimeCheckRangeEnds[i] = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[i] * c_dayMSec);
+            freeTimeCheckRangeEnds[i] = cuttingTime.addMSecs(this->m_freeTimeCheckRanges[i] * c_dayMSec).toUTC();
             this->m_freeTime[i] = 0;
         }
         
@@ -1984,6 +2075,8 @@ namespace LPP
         for (QObject* object:occurrenceList.getData()){
             Occurrence* occurrence = static_cast<Occurrence*>(object);
             
+            if (occurrence->canceled()) continue;
+            
             //qDebug() << occurrence->plan()->name() << occurrence->minRequirement();
             occurrence->updateProgress();
             
@@ -2008,7 +2101,7 @@ namespace LPP
             futureBound = ranges.last()->end;
             
             freeRanges.insert(freeRanges.end(), TimeInterval(cuttingTime, futureBound));
-            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60), futureBound.addSecs(120)));
+            freeRanges.insert(freeRanges.end(), TimeInterval(futureBound.addSecs(60).toUTC(), futureBound.addSecs(120).toUTC()));
             
             //fill future as early as possible
             for (SimpleOccurrence* range:ranges){
@@ -2047,7 +2140,7 @@ namespace LPP
                         }
                         else {
                             std::set<TimeInterval>::iterator hint = freeRanges.erase(firstFreeIt);
-                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60), firstFree.end));
+                            freeRanges.insert(hint, TimeInterval(firstFree.start.addSecs((Int64)range->requirement * 60).toUTC(), firstFree.end));
                             break;
                         }
                     }
@@ -2082,6 +2175,8 @@ namespace LPP
         
         for (QObject* object:occurrenceList.getData()){
             Occurrence* occurrence = static_cast<Occurrence*>(object);
+            
+            if (occurrence->canceled()) continue;
             
             occurrence->reset();
             

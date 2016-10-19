@@ -20,6 +20,11 @@ ColumnLayout {
     
     property alias currentItem: pageView.currentItem;
     
+    onVisibleChanged: {
+        if (visible) Engine.noAutoDelete = true;
+        else Engine.noAutoDelete = false;
+    }
+    
     Component.onCompleted: {
         mainWindow.moduleChange.connect(onModuleChange);
     }

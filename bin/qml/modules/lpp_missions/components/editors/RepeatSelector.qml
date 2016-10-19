@@ -10,6 +10,7 @@ import ".."
     
 ColumnLayout {
     property Instance instance;
+    spacing: 5
     
     function loadFromInstance(_instance){
         instance = _instance;
@@ -42,7 +43,7 @@ ColumnLayout {
         }
         
         if (instance.isForever()) {
-            console.log("dafuq")
+            //console.log("dafuq")
             foreverBox.checked = true;
             untilTxt.text = ""
         }
@@ -50,6 +51,8 @@ ColumnLayout {
             foreverBox.checked = false;
             untilTxt.text = Engine.timeToString(instance.repeatUntil);
         }
+        
+        permanentBox.checked = !instance.permanent
     }
     
     function saveToInstance(){
@@ -87,17 +90,19 @@ ColumnLayout {
         instance.repeatParam = repeatParam;
         instance.repeatUntil = repeatUntil;
         
+        instance.permanent = !permanentBox.checked;
+        
         return true;
     }
     
     GridLayout {
         Layout.fillWidth: true
         layoutDirection: Qt.LeftToRight
-        columnSpacing: 10
+        columnSpacing: 5
         rows: 3
         flow: GridLayout.LeftToRight
         columns: 3
-        rowSpacing: 10
+        rowSpacing: 5
         
         ExclusiveGroup {
             id: excGroup
@@ -222,5 +227,10 @@ ColumnLayout {
                 untilTxt.text = Engine.timeToString(Engine.currentTime());
             }
         }
+    }
+    
+    CheckBox {
+        id: permanentBox
+        text: qsTr("Delete Instance Automatically when Finished")
     }
 }

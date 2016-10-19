@@ -11,7 +11,7 @@ ApplicationWindow {
     visible: false
     id: window
     minimumWidth: 400
-    minimumHeight: 380
+    minimumHeight: 550
     title: qsTr("Edit Instance")
     flags: Qt.Dialog;
     modality: Qt.WindowModal
@@ -36,6 +36,8 @@ ApplicationWindow {
         intvSelector.end = Engine.timeToString(instance.endTime);
         
         repeatSelector.loadFromInstance(instance)
+        
+        maskSelector.loadFromInstance(instance)
     }
     
     function save(){
@@ -55,6 +57,7 @@ ApplicationWindow {
         }
         
         if (!repeatSelector.saveToInstance()) return;
+        if (!maskSelector.saveToInstance()) return;
         
         instance.startTime = editBeginDate;
         instance.endTime = editEndDate;
@@ -74,9 +77,9 @@ ApplicationWindow {
         GroupBox {
             title: qsTr("Time Frame")
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumWidth: 100
+            Layout.minimumWidth: 50
             Layout.maximumWidth: 65536
+            width: 50
             IntervalSelector{
                 id: intvSelector
                 anchors.left: parent.left
@@ -90,8 +93,31 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.minimumHeight: 50
             Layout.maximumHeight: 65536
+            Layout.minimumWidth: 50
+            Layout.maximumWidth: 65536
+            width: 50
             RepeatSelector {
                 id: repeatSelector
+                anchors.fill: parent
+                anchors.topMargin: 5
+                anchors.bottomMargin: 5
+                anchors.leftMargin: 5
+                anchors.rightMargin: 5
+            }
+        }
+        
+        GroupBox {
+            title: qsTr("Canceled Occurrences")
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 50
+            Layout.maximumHeight: 65536
+            Layout.minimumWidth: 50
+            Layout.maximumWidth: 65536
+            width: 50
+            height: 50
+            MaskSelector {
+                id: maskSelector
                 anchors.fill: parent
                 anchors.topMargin: 5
                 anchors.bottomMargin: 5

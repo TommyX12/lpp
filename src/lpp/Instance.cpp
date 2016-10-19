@@ -16,6 +16,8 @@ namespace LPP
         this->m_repeatParam = 1;
         this->m_repeatUntil = Engine::current()->timeOrigin();
         this->m_plan = nullptr;
+        
+        this->m_permanent = true;
     }
     
     Instance::~Instance()
@@ -109,6 +111,81 @@ namespace LPP
         return this->m_repeatUntil < this->m_startTime;
     }
     
+    bool Instance::permanent()
+    {
+        return this->m_permanent;
+    }
+    
+    bool Instance::setPermanent(bool permanent)
+    {
+        this->m_permanent = permanent;
+        emit this->permanentChanged();
+        return this->m_permanent;
+    }
+    
+    QString Instance::getMask()
+    {
+        return this->m_mask;
+    }
+    
+    const QVector<QPair<QDateTime, QDateTime>>& Instance::getMaskData()
+    {
+        return this->m_maskData;
+    }
+    
+    bool Instance::compareDatePairs(const QPair<QDateTime, QDateTime>& a, const QPair<QDateTime, QDateTime>& b)
+    {
+        return a.first < b.first;
+    }
+    
+    bool Instance::setMask(const QString& _mask)
+    {
+        QString mask = _mask.trimmed();
+        
+        QVector<QPair<QDateTime, QDateTime>> tempMaskData;
+        
+        QStringList entries = mask.split('\n', QString::SkipEmptyParts);
+        
+        for (QString& entry:entries){
+            QStringList dates = entry.split('-', QString::SkipEmptyParts);
+            if (dates.length() == 1){
+                QDateTime start = QDateTime::fromString(dates[0].trimmed(), e_timeStringMaskFormat);
+                start.setTimeSpec(Qt::UTC);
+                if (!start.isValid()) return false;
+                QDateTime end = start.addMSecs(c_dayMSec).toUTC();
+                if (!end.isValid()) return false;
+                
+                tempMaskData.append(QPair<QDateTime, QDateTime>(start, end));
+            }
+            else if (dates.length() == 2){
+                QDateTime start = QDateTime::fromString(dates[0].trimmed(), e_timeStringMaskFormat);
+                start.setTimeSpec(Qt::UTC);
+                if (!start.isValid()) return false;
+                QDateTime end = QDateTime::fromString(dates[1].trimmed(), e_timeStringMaskFormat);
+                end.setTimeSpec(Qt::UTC);
+                if (!end.isValid()) return false;
+                end = end.addMSecs(c_dayMSec).toUTC();
+                if (!end.isValid()) return false;
+                if (end <= start) return false;
+                
+                tempMaskData.append(QPair<QDateTime, QDateTime>(start, end));
+            }
+            else {
+                return false;
+            }
+        }
+        
+        Engine::current()->setOccurrencesChanged();
+        
+        this->m_maskData.clear();
+        this->m_maskData = tempMaskData;
+        
+        std::sort(this->m_maskData.begin(), this->m_maskData.end(), compareDatePairs);
+        
+        this->m_mask = mask;
+        return true;
+    }
+    
     QString Instance::getParams()
     {
         QString str;
@@ -118,6 +195,10 @@ namespace LPP
         text << "repeatMode," << this->repeatMode() << ",";
         text << "repeatParam," << this->repeatParam() << ",";
         text << "repeatUntil," << Engine::current()->timeToString(this->repeatUntil()) << ",";
+        QString maskTxt = this->getMask();
+        maskTxt.remove(',');
+        maskTxt.replace('\n', ';');
+        text << "mask," << maskTxt << ",";
         return str;
     }
     
@@ -132,6 +213,11 @@ namespace LPP
             else if (name == "repeatMode") this->setRepeatMode(value);
             else if (name == "repeatParam") this->setRepeatParam(value.toInt());
             else if (name == "repeatUntil") this->setRepeatUntil(Engine::current()->stringToTime(value));
+            else if (name == "mask") {
+                QString maskTxt = value;
+                maskTxt.replace(';', '\n');
+                this->setMask(maskTxt);
+            }
         }
     }
 }

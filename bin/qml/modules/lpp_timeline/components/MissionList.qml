@@ -10,7 +10,7 @@ ColumnLayout {
     property Component occItem_comp: null
     property real occItemHeight: 25
     
-    function updateTxt(numBlue, numYellow, numRed){
+    function updateTxt(numBlue, numYellow, numRed, numCanceled){
         txt1.text = numBlue
         
         if (numYellow > 0) {
@@ -24,6 +24,12 @@ ColumnLayout {
             txt3.text = numRed
         }
         else txt3.visible = false
+        
+        if (numCanceled > 0) {
+            txt4.visible = true
+            txt4.text = numCanceled
+        }
+        else txt4.visible = false
     }
     
     RowLayout {
@@ -45,6 +51,12 @@ ColumnLayout {
             id: txt3
             font.bold: true
             color: "#DD3333"
+            visible: false
+        }
+        Label {
+            id: txt4
+            font.bold: true
+            color: "#666666"
             visible: false
         }
     }

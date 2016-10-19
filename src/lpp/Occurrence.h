@@ -26,6 +26,7 @@ namespace LPP
         Q_PROPERTY(Instance* instance READ instance WRITE setInstance NOTIFY instanceChanged)
         
         Q_PROPERTY(bool impossible READ impossible NOTIFY impossibleChanged)
+        Q_PROPERTY(bool canceled READ canceled NOTIFY canceledChanged)
         
         Q_PROPERTY(Float progress READ progress NOTIFY progressChanged)
         Q_PROPERTY(Float progressNow READ progressNow NOTIFY progressNowChanged)
@@ -61,6 +62,9 @@ namespace LPP
         bool impossible();
         bool setImpossible(bool);
         
+        bool canceled();
+        bool setCanceled(bool);
+        
         Float progress();
         Float progressNow();
         
@@ -74,7 +78,7 @@ namespace LPP
         
         Int m_minRequirement;
         
-        bool m_impossible;
+        bool m_impossible, m_canceled;
         
         Float m_progress, m_progressNow;
         
@@ -86,6 +90,7 @@ namespace LPP
         void instanceChanged();
         
         void impossibleChanged();
+        void canceledChanged();
         
         void progressChanged();
         void progressNowChanged();
