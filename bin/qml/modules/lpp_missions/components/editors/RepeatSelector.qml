@@ -231,6 +231,6 @@ ColumnLayout {
     
     CheckBox {
         id: permanentBox
-        text: qsTr("Delete Instance Automatically when Finished")
+        text: qsTr("Delete instance automatically when all occurrences are finished")
     }
 }

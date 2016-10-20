@@ -192,6 +192,8 @@ ApplicationWindow {
         console.log(Engine.timeOrigin);
         */
         
+        refreshOnTime();
+        
         console.log("standing by.")
     }
     
@@ -245,6 +247,9 @@ ApplicationWindow {
         //event.accepted = false;
     }
      
+    function refreshOnTime(){
+        status.text = " " + Engine.timeToStringReadFull(Engine.currentTime());
+    }
     
     Timer {
         id: timer
@@ -254,6 +259,7 @@ ApplicationWindow {
         
         onTriggered:{ 
             //mainWindow.alert(0);
+            refreshOnTime();
             enterSecond();
         }
     }

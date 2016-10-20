@@ -66,44 +66,73 @@ Item {
         var alerts = [0,0,0,0,0,0,0,0,0];
         var canceled = [0,0,0];
         
+        var showCanceled = showCanceledBox.checked;
+        var showAbnormal = showAbnormalBox.checked;
+        
         
         for (i = 0; i < occurrences.size; i++){
             occurrence = occurrences.at(i);
             
+            var abnormal = false;
+            
             if (occurrence.endTime <= now){
                 if (occurrence.canceled) {
                     canceled[0]++;
-                    if (showCanceledBox.checked) pastList.list.add(occurrence);
+                    if (showCanceled) pastList.list.add(occurrence);
                     continue;
                 }
-                pastList.list.add(occurrence);
-                if (occurrence.impossible) alerts[2]++;
-                else if (occurrence.progress < 1.0) alerts[1]++;
-                else alerts[0]++;
+                if (occurrence.impossible) {
+                    alerts[2]++;
+                    abnormal = true;
+                }
+                else if (occurrence.progress < 1.0) {
+                    alerts[1]++;
+                    abnormal = true;
+                }
+                else {
+                    alerts[0]++;
+                }
+                if (abnormal || !showAbnormal) pastList.list.add(occurrence);
             }
             else if (occurrence.startTime > now){
                 if (occurrence.canceled) {
                     canceled[2]++;
-                    if (showCanceledBox.checked) upcomingList.list.add(occurrence);
+                    if (showCanceled) upcomingList.list.add(occurrence);
                     continue;
                 }
-                if (occurrence.startTime < Engine.autoplanMax) {
-                    upcomingList.list.add(occurrence);
+                if (occurrence.impossible) {
+                    alerts[8]++;
+                    abnormal = true;
                 }
-                if (occurrence.impossible) alerts[8]++;
-                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) alerts[7]++;
-                else alerts[6]++;
+                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) {
+                    alerts[7]++;
+                    abnormal = true;
+                }
+                else {
+                    alerts[6]++;
+                }
+                //if (occurrence.startTime < Engine.autoplanMax) {
+                    if (abnormal || !showAbnormal) upcomingList.list.add(occurrence);
+                //}
             }
             else {
                 if (occurrence.canceled) {
                     canceled[1]++;
-                    if (showCanceledBox.checked) activeList.list.add(occurrence);
+                    if (showCanceled) activeList.list.add(occurrence);
                     continue;
                 }
-                activeList.list.add(occurrence);
-                if (occurrence.impossible) alerts[5]++;
-                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) alerts[4]++;
-                else alerts[3]++;
+                if (occurrence.impossible) {
+                    alerts[5]++;
+                    abnormal = true;
+                }
+                else if (occurrence.endTime <= Engine.autoplanMax && occurrence.progress < 1.0) {
+                    alerts[4]++;
+                    abnormal = true;
+                }
+                else {
+                    alerts[3]++;
+                }
+                if (abnormal || !showAbnormal) activeList.list.add(occurrence);
             }
         }
         
@@ -173,15 +202,28 @@ Item {
         }
         */
         
-        CheckBox{
-            id: showCanceledBox
-            text: qsTr("Show Canceled Occurrences")
-            checked: false
-            onCheckedChanged: {
-                refreshOnChange();
+        RowLayout {
+            
+            CheckBox{
+                id: showAbnormalBox
+                text: qsTr("Show abnormal occurrences only")
+                checked: false
+                onCheckedChanged: {
+                    refreshOnChange();
+                }
             }
-        }
         
+            CheckBox{
+                id: showCanceledBox
+                text: qsTr("Show canceled occurrences")
+                checked: false
+                onCheckedChanged: {
+                    refreshOnChange();
+                }
+            }
+            
+        }
+            
         RowLayout {
             Layout.fillWidth: true
             Layout.minimumWidth: 400

@@ -4,7 +4,8 @@ import QtQuick.Layouts 1.1
 
 import "utils/Utils.js" as Utils
 
-Item {
+ColumnLayout{
+    
     id: list
     
     property var objItemPool: []
@@ -20,7 +21,11 @@ Item {
     property real spacing: 5;
     property real sideSpacing: 5
     
-    signal itemTriggered(var object, int index, var data);
+    property int pageIndex: 1
+    
+    property int pageTotal: 1
+    
+    property int maxItemPerPage: 100
     
     function clear(){
         objList = [];
@@ -41,8 +46,17 @@ Item {
             objItemPool[i].visible = objItemPool[i].enabled = false;
         }
         
-        var start = Utils.clamp(Math.floor((objItemScroll.flickableItem.contentY - spacing) / (objItemHeight + spacing)), 0, numObjects);
-        var end = Utils.clamp(Math.ceil((objItemScroll.flickableItem.contentY + objItemScroll.flickableItem.height - spacing) / (objItemHeight + spacing)), 0, numObjects);
+        pageTotal = Math.ceil(numObjects / maxItemPerPage)
+        if (pageTotal == 0) pageTotal = 1;
+        pageIndex = Utils.clamp(pageIndex, 1, pageTotal)
+        
+        var pageItemOffset = (maxItemPerPage * (pageIndex - 1));
+        
+        var start = Math.floor((objItemScroll.flickableItem.contentY - spacing) / (objItemHeight + spacing));
+        var end = Math.ceil((objItemScroll.flickableItem.contentY + objItemScroll.flickableItem.height - spacing) / (objItemHeight + spacing));
+        
+        start = Utils.clamp(start + pageItemOffset, pageItemOffset, numObjects);
+        end = Utils.clamp(end + pageItemOffset, pageItemOffset, Math.min(numObjects, start + maxItemPerPage));
         
         var obj, objItem;
         
@@ -56,7 +70,7 @@ Item {
             else objItem = objItemPool[j];
             
             objItem.visible = objItem.enabled = true;
-            objItem.y = i * (objItemHeight + spacing);
+            objItem.y = (i - pageItemOffset) * (objItemHeight + spacing);
             objItem.object = objList[i];
             objItem.index = i;
             objItem.list = list;
@@ -82,43 +96,94 @@ Item {
         objItem.object = object;
         */
         
-        objItemContainerWrap.height = numObjects * (spacing + objItemHeight) + spacing;
+        objItemContainerWrap.height = Math.min(numObjects - pageItemOffset, maxItemPerPage) * (spacing + objItemHeight) + spacing;
     }
     
-    ScrollView{
-        id: objItemScroll
-        anchors.fill: parent
-        clip: true
+    signal itemTriggered(var object, int index, var data);
+    
+    Item {
         
-        flickableItem.onContentYChanged: refresh();
-        flickableItem.onHeightChanged: refresh();
+        Layout.fillHeight: true
+        Layout.fillWidth: true
+        Layout.minimumWidth: 50
+        Layout.minimumHeight: 50
+        Layout.maximumWidth: 65536
+        Layout.maximumHeight: 65536
         
-        Item {
-            id: objItemContainerWrap
+        ScrollView{
+            id: objItemScroll
+            anchors.fill: parent
+            clip: true
             
-            width: objItemScroll.flickableItem.width
-            height: 1
+            flickableItem.onContentYChanged: refresh();
+            flickableItem.onHeightChanged: refresh();
             
-            Item{
+            Item {
+                id: objItemContainerWrap
                 
-                id: objItemContainer
+                width: objItemScroll.flickableItem.width
+                height: 1
                 
-                anchors.top: parent.top
-                anchors.topMargin: spacing
-                anchors.left: parent.left
-                anchors.leftMargin: sideSpacing
-                anchors.right: parent.right
-                anchors.rightMargin: sideSpacing
+                Item{
+                    
+                    id: objItemContainer
+                    
+                    anchors.top: parent.top
+                    anchors.topMargin: spacing
+                    anchors.left: parent.left
+                    anchors.leftMargin: sideSpacing
+                    anchors.right: parent.right
+                    anchors.rightMargin: sideSpacing
+                }
             }
+        }
+        
+        Rectangle {
+            anchors.fill:parent
+            
+            color: "transparent"
+            
+            border.color: "black"
+            border.width: 1
         }
     }
     
-    Rectangle {
-        anchors.fill:parent
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 50
+        Layout.maximumWidth: 65536
         
-        color: "transparent"
+        visible: maxItemPerPage != 0
         
-        border.color: "black"
-        border.width: 1
+        SimpleButton {
+            width: 50
+            Layout.alignment: Qt.AlignLeft
+            text: "<-"
+            enabled: pageIndex > 1
+            onClicked: {
+                pageIndex--;
+                refresh();
+            }
+        }
+        
+        Label {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 30
+            Layout.maximumWidth: 65536
+            Layout.alignment: Qt.AlignHCenter
+            text: pageIndex + '/' + pageTotal
+            horizontalAlignment: Text.AlignHCenter
+        }
+        
+        SimpleButton {
+            width: 50
+            Layout.alignment: Qt.AlignRight
+            text: "->"
+            enabled: pageIndex < pageTotal
+            onClicked: {
+                pageIndex++;
+                refresh();
+            }
+        }
     }
 }

@@ -515,7 +515,7 @@ Item {
                         enabled: timeline.editingAction != null;
                         onClicked: {
                             timeline.editingAction = null;
-                            if (editingAuto && Engine.globalSettings.autoAutoPlan){
+                            if (Engine.globalSettings.autoAutoPlan && editingAuto && editEnd > Engine.currentTime().getTime()){
                                 mainWindow.showWarning(qsTr("Warning"), qsTr("Auto session generation is currently enabled. If a dynamic session is erased, it will be filled back in instantly to complete missions. Delete the mission instead."));
                             }
                         }

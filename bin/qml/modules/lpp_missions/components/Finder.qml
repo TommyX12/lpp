@@ -55,7 +55,7 @@ ApplicationWindow {
             finder.search();
         }
         
-        property real maxWidth: 0;
+        //property real maxWidth: 0;
         
         Component {
             id: tableItem_comp
@@ -92,6 +92,8 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: finder.internalLeftMargin
+                    anchors.right: parent.right
+                    elide: Text.ElideMiddle
                 }
                 
             }
@@ -155,7 +157,7 @@ ApplicationWindow {
             
             var item;
             
-            maxWidth = 0;
+            //maxWidth = 0;
             
             for (i = start; i < end; i++){
                 item = searchList.at(i);
@@ -172,12 +174,12 @@ ApplicationWindow {
                 //console.log(item.object, itemList[j], itemList, itemList[j].currentItem)
                 itemList[j].currentIndex = i;
                 
-                maxWidth = Math.max(maxWidth, itemList[j].label.contentWidth)
+                //maxWidth = Math.max(maxWidth, itemList[j].label.contentWidth)
                 
                 j++;
             }
             
-            maxWidth += 2 * internalLeftMargin;
+            //maxWidth += 2 * internalLeftMargin;
         }
         
         
@@ -263,7 +265,7 @@ ApplicationWindow {
                     
                     Item {
                         id: tableArea
-                        width: Math.max(finder.maxWidth, finder.scrollView.flickableItem.width)
+                        width: finder.scrollView.flickableItem.width
                     }
                 }
             }
