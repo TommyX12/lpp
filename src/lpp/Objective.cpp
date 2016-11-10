@@ -25,12 +25,17 @@ namespace LPP
     
     Action* Objective::action()
     {
+        if (this->tempActionID != -1 && this->m_action == nullptr){
+            this->setAction(static_cast<Action*>(Engine::current()->getActionByID(this->tempActionID)));
+        }
         return this->m_action;
     }
     
     Action* Objective::setAction(Action* action)
     {
         Engine::current()->setTimeChanged();
+        
+        if (action != nullptr) this->tempActionID = action->id();
         
         this->m_action = action;
         emit this->actionChanged();
@@ -51,6 +56,7 @@ namespace LPP
         return this->m_length;
     }
     
+    /*
     QString Objective::getParams()
     {
         QString str;
@@ -69,5 +75,24 @@ namespace LPP
             if (name == "action") this->tempActionID = value.toInt();
             else if (name == "length") this->setLength(value.toInt());
         }
+    }
+    */
+    
+    QJsonObject Objective::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        json["action"] = this->action()->id();
+        json["length"] = this->length();
+        
+        return json;
+    }
+    
+    void Objective::loadFromJson(const QJsonObject& json)
+    {
+        this->tempActionID = json["action"].toInt();
+        this->setAction(nullptr);
+        
+        this->setLength(json["length"].toInt());
     }
 }

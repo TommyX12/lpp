@@ -5,6 +5,8 @@
 
 #include "Engine.h"
 
+#include <QJsonArray>
+
 namespace LPP
 {
     Folder::Folder()
@@ -59,7 +61,9 @@ namespace LPP
     {
         Engine::current()->setOccurrencesChanged();
         
-        return this->m_id = id;
+        this->m_id = id;
+        emit this->idChanged();
+        return this->m_id;
     }
     
     void Folder::updateFullPath()
@@ -147,6 +151,7 @@ namespace LPP
         return this->m_parentFolder;
     }
     
+    /*
     void Folder::setParam(const QString& name, const QString& value)
     {
         if (name == "name") this->setName(value);
@@ -164,6 +169,27 @@ namespace LPP
         params.append(QPair<QString, QString>("color", this->color().name()));
         
         return params;
+    }
+    */
+    
+    QJsonObject Folder::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        json["name"] = this->name();
+        json["note"] = this->note();
+        json["useParentFolderColor"] = this->useParentFolderColor();
+        json["color"] = this->color().name();
+        
+        return json;
+    }
+    
+    void Folder::loadFromJson(const QJsonObject& json)
+    {
+        this->setName(json["name"].toString());
+        this->setNote(json["note"].toString());
+        this->setUseParentFolderColor(json["useParentFolderColor"].toBool());
+        this->setColor(QColor(json["color"].toString()));
     }
     
     QString Folder::getFileName()

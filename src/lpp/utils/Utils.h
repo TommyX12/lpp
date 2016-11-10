@@ -13,6 +13,6 @@ namespace LPP
         QPair<Int, Int> stringMatching(const QString&, const QString&, const QVector<Int>&, bool);
         QVector<Int> generateMatchingInfo(const QString&);
         
-        
+        QPair<Int, Int> sequenceMatching(const QString&, const QString&, bool);
     }
 }

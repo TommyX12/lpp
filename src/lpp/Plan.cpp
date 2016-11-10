@@ -8,6 +8,8 @@
 
 #include <QQmlEngine>
 
+#include <QJsonArray>
+
 
 namespace LPP
 {
@@ -54,7 +56,9 @@ namespace LPP
     {
         Engine::current()->setOccurrencesChanged();
         
-        return this->m_id = id;
+        this->m_id = id;
+        emit this->idChanged();
+        return this->m_id;
     }
     
     void Plan::updateFullPath()
@@ -102,6 +106,7 @@ namespace LPP
         return this->m_note;
     }
     
+    /*
     void Plan::setParam(const QString& name, const QString& value)
     {
         if (name == "name") this->setName(value);
@@ -143,6 +148,64 @@ namespace LPP
         params.append(QPair<QString, QString>("instances", instancesStr));
         
         return params;
+    }
+    */
+    
+    QJsonObject Plan::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        json["name"] = this->name();
+        json["note"] = this->note();
+        json["completionMode"] = this->completionMode();
+        
+        
+        QJsonArray objectivesArray = QJsonArray(); 
+        
+        for (QObject* object:this->objectives()->getData()){
+            Objective* objective = static_cast<Objective*>(object);
+            objectivesArray.append(objective->saveToJson());
+        }
+        
+        json["objectives"] = objectivesArray;
+        
+        
+        QJsonArray instancesArray = QJsonArray(); 
+        
+        for (QObject* object:this->instances()->getData()){
+            Instance* instance = static_cast<Instance*>(object);
+            instancesArray.append(instance->saveToJson());
+        }
+        
+        json["instances"] = instancesArray;
+        
+        
+        return json;
+    }
+    
+    void Plan::loadFromJson(const QJsonObject& json)
+    {
+        this->setName(json["name"].toString());
+        this->setNote(json["note"].toString());
+        this->setCompletionMode(json["completionMode"].toInt());
+        
+        this->objectives()->clear();
+        QJsonArray objectivesArray = json["objectives"].toArray();
+        
+        for (int i = 0; i < objectivesArray.size(); ++i){
+            QJsonObject objectiveJson = objectivesArray[i].toObject();
+            Objective* objective = static_cast<Objective*>(this->createObjective(nullptr));
+            objective->loadFromJson(objectiveJson);
+        }
+        
+        this->instances()->clear();
+        QJsonArray instancesArray = json["instances"].toArray();
+        
+        for (int i = 0; i < instancesArray.size(); ++i){
+            QJsonObject instanceJson = instancesArray[i].toObject();
+            Instance* instance = static_cast<Instance*>(this->createInstance());
+            instance->loadFromJson(instanceJson);
+        }
     }
     
     QString Plan::getFileName()

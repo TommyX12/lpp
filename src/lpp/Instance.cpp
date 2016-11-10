@@ -186,6 +186,7 @@ namespace LPP
         return true;
     }
     
+    /*
     QString Instance::getParams()
     {
         QString str;
@@ -219,5 +220,32 @@ namespace LPP
                 this->setMask(maskTxt);
             }
         }
+    }
+    */
+    
+    QJsonObject Instance::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        json["startTime"] = Engine::current()->timeToString(this->startTime());
+        json["endTime"] = Engine::current()->timeToString(this->endTime());
+        json["repeatMode"] = this->repeatMode();
+        json["repeatParam"] = this->repeatParam();
+        json["repeatUntil"] = Engine::current()->timeToString(this->repeatUntil());
+        json["mask"] = this->getMask();
+        json["permanent"] = this->permanent();
+        
+        return json;
+    }
+    
+    void Instance::loadFromJson(const QJsonObject& json)
+    {
+        this->setStartTime(Engine::current()->stringToTime(json["startTime"].toString()));
+        this->setEndTime(Engine::current()->stringToTime(json["endTime"].toString()));
+        this->setRepeatMode(json["repeatMode"].toString());
+        this->setRepeatParam(json["repeatParam"].toInt());
+        this->setRepeatUntil(Engine::current()->stringToTime(json["repeatUntil"].toString()));
+        this->setMask(json["mask"].toString());
+        this->setPermanent(json["permanent"].toBool(false));
     }
 }

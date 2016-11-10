@@ -16,6 +16,7 @@ namespace LPP
         
     }
     
+    /*
     void Settings::setParam(const QString& name, const QString& value)
     {
         QByteArray array = name.toLatin1();
@@ -36,5 +37,32 @@ namespace LPP
         }
         
         return params;
+    }
+    */
+    
+    QJsonObject Settings::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        const QMetaObject* metaObject = this->metaObject();
+        
+        for(int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); ++i){
+            QString name = QString::fromLatin1(metaObject->property(i).name());
+            QByteArray array = name.toLatin1();
+            json[name] = this->property(array.data()).toString();
+        }
+        
+        return json;
+    }
+    
+    void Settings::loadFromJson(const QJsonObject& json)
+    {
+        const QMetaObject* metaObject = this->metaObject();
+        
+        for(int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); ++i){
+            QString name = QString::fromLatin1(metaObject->property(i).name());
+            QByteArray array = name.toLatin1();
+            this->setProperty(array.data(), QVariant(json[name].toString()));
+        }
     }
 }

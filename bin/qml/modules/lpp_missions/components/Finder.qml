@@ -47,11 +47,15 @@ ApplicationWindow {
         property var searchList: null;
         
         property bool caseSensitive: caseSensitiveBox.checked;
+        property bool fuzzy: fuzzyBox.checked;
         
         property alias scrollView: scrollView
         property alias tableArea: tableArea
         
         onCaseSensitiveChanged: {
+            finder.search();
+        }
+        onFuzzyChanged: {
             finder.search();
         }
         
@@ -110,7 +114,7 @@ ApplicationWindow {
         
         function search(requestList){
             if (requestList == true) searchList = Engine.requestSearchList(allowFoldersBtn.checked, allowActionsBtn.checked, allowPlansBtn.checked);
-            searchList.refresh(textField.text, caseSensitive)
+            searchList.refresh(textField.text, caseSensitive, fuzzy)
             selectedItem = searchList.size > 0 ? searchList.at(0).object : null;
             selectedIndex = 0;
             scrollView.flickableItem.contentY = 0;
@@ -232,6 +236,11 @@ ApplicationWindow {
             CheckBox {
                 id: caseSensitiveBox
                 text: qsTr("Case Sensitive")
+            }
+            CheckBox {
+                id: fuzzyBox
+                text: qsTr("Fuzzy Search")
+                checked: true
             }
         }
         

@@ -17,8 +17,11 @@ namespace LPP
         Settings();
         virtual ~Settings();
         
-        virtual void setParam(const QString&, const QString&);
-        virtual QVector<QPair<QString, QString>> getParams();
+        //virtual void setParam(const QString&, const QString&);
+        //virtual QVector<QPair<QString, QString>> getParams();
+        
+        virtual QJsonObject saveToJson();
+        virtual void loadFromJson(const QJsonObject&);
         
     };
 

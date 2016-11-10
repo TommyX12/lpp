@@ -7,6 +7,7 @@ namespace LPP
 {
     extern Int e_maxID;
     extern QString e_savePath;
+    extern QString e_testingSavePath;
     extern QString e_rootFolderFileName;
     extern QString e_timelineFileName;
     extern QString e_folderDataFileName;

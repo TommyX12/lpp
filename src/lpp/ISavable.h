@@ -4,6 +4,8 @@
 #include <QVector>
 #include <QPair>
 
+#include <QJsonObject>
+
 #include "utils/Types.h"
 
 namespace LPP
@@ -19,9 +21,17 @@ namespace LPP
         ISavable();
         virtual ~ISavable();
         
-        virtual void setParams(const QVector<QPair<QString, QString>>&);
-        virtual void setParam(const QString&, const QString&);
-        virtual QVector<QPair<QString, QString>> getParams();
+        //virtual void setParams(const QVector<QPair<QString, QString>>&);
+        //virtual void setParam(const QString&, const QString&);
+        //virtual QVector<QPair<QString, QString>> getParams();
+        
+        virtual QJsonObject saveToJson();
+        QString saveToString();
+        void saveToFile(const QString&, const QString&);
+        
+        virtual void loadFromJson(const QJsonObject&);
+        void loadFromString(const QString&);
+        void loadFromFile(const QString&);
         
         virtual QString getFileName();
         

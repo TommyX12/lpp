@@ -114,6 +114,7 @@ namespace LPP
         this->appPath = app.applicationDirPath() + "/..";
         this->qmlPath = app.applicationDirPath() + "/../qml";
         this->savePath = this->appPath + e_savePath;
+        this->testingSavePath = this->appPath + e_testingSavePath;
         
         //this->m_test = new Actionaction();
         
@@ -291,7 +292,8 @@ namespace LPP
     {
         if (folder == nullptr) return;
         
-        this->saveToFile(this->getFilePath(*folder) + folder->getFileName(), e_folderDataFileName + e_saveFileNameExtension, *folder);
+        //this->saveToFile(this->getFilePath(*folder) + folder->getFileName(), e_folderDataFileName + e_saveFileNameExtension, *folder);
+        folder->saveToFile(this->getFilePath(*folder) + folder->getFileName(), e_folderDataFileName + e_saveFileNameExtension);
     }
     
     Int Engine::numFolders()
@@ -423,7 +425,8 @@ namespace LPP
         
         std::sort(action->plans()->getData().begin(), action->plans()->getData().end(), Action::comparePlans);
         
-        this->saveToFile(this->getFilePath(*action), action->getFileName() + e_saveFileNameExtension, *action);
+        //this->saveToFile(this->getFilePath(*action), action->getFileName() + e_saveFileNameExtension, *action);
+        action->saveToFile(this->getFilePath(*action), action->getFileName() + e_saveFileNameExtension);
     }
     
     Int Engine::numActions()
@@ -525,7 +528,8 @@ namespace LPP
         //std::sort(plan->objectives()->getData().begin(), plan->objectives()->getData().end(), Plan::compareObjective);
         std::sort(plan->instances()->getData().begin(), plan->instances()->getData().end(), Plan::compareInstance);
         
-        this->saveToFile(this->getFilePath(*plan), plan->getFileName() + e_saveFileNameExtension, *plan);
+        //this->saveToFile(this->getFilePath(*plan), plan->getFileName() + e_saveFileNameExtension, *plan);
+        plan->saveToFile(this->getFilePath(*plan), plan->getFileName() + e_saveFileNameExtension);
     }
     
     Int Engine::numPlans()
@@ -583,6 +587,7 @@ namespace LPP
         return this->savePath + path;
     }
     
+    /*
     void Engine::saveToFile(const QString& filePath, const QString& fileName, ISavable& savable)
     {
         qDebug() << "saving:" << filePath + fileName;
@@ -615,6 +620,7 @@ namespace LPP
         }
         file.close();
     }
+    */
     
     void Engine::deleteDirectory(const QString& dirPath)
     {
@@ -632,7 +638,7 @@ namespace LPP
     
     void Engine::loadDirectory(const QString& dirPath, Folder* folder)
     {
-        QDir dir(dirPath);
+        QDir dir(this->savePath + dirPath);
         QStringList subFolderList = dir.entryList(QStringList(e_folderFileNamePrefix + "*"), QDir::NoDotAndDotDot | QDir::Dirs);
         QStringList subActionList = dir.entryList(QStringList(e_actionFileNamePrefix + "*" + e_saveFileNameExtension), QDir::NoDotAndDotDot | QDir::Files);
         QStringList subPlanList = dir.entryList(QStringList(e_planFileNamePrefix + "*" + e_saveFileNameExtension), QDir::NoDotAndDotDot | QDir::Files);
@@ -643,7 +649,10 @@ namespace LPP
             
             subFolder = "/" + subFolder;
             
-            this->loadFromFile(dirPath + subFolder + e_folderDataFileName + e_saveFileNameExtension, *newFolder);
+            //this->loadFromFile(this->savePath + dirPath + subFolder + e_folderDataFileName + e_saveFileNameExtension, *newFolder);
+            newFolder->loadFromFile(this->savePath + dirPath + subFolder + e_folderDataFileName + e_saveFileNameExtension);
+            
+            //newFolder->saveToFile(this->testingSavePath + dirPath + subFolder, e_folderDataFileName + e_saveFileNameExtension);
             
             loadDirectory(dirPath + subFolder, newFolder);
         }
@@ -654,7 +663,10 @@ namespace LPP
             
             subAction = "/" + subAction;
             
-            this->loadFromFile(dirPath + subAction, *newAction);
+            //this->loadFromFile(this->savePath + dirPath + subAction, *newAction);
+            newAction->loadFromFile(this->savePath + dirPath + subAction);
+            
+            //newAction->saveToFile(this->testingSavePath + dirPath, subAction);
         }
         
         for (QString subPlan:subPlanList){
@@ -663,7 +675,10 @@ namespace LPP
             
             subPlan = "/" + subPlan;
             
-            this->loadFromFile(dirPath + subPlan, *newPlan);
+            //this->loadFromFile(this->savePath + dirPath + subPlan, *newPlan);
+            newPlan->loadFromFile(this->savePath + dirPath + subPlan);
+            
+            //newPlan->saveToFile(this->testingSavePath + dirPath, subPlan);
         }
     }
     
@@ -948,11 +963,19 @@ namespace LPP
     {
         qDebug() << "loading...";
                 
-        this->loadFromFile(this->savePath + e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
-        this->loadFromFile(this->savePath + e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
-                
-        this->loadDirectory(this->savePath + e_rootFolderFileName, &this->m_rootFolder);
+        //this->loadFromFile(this->savePath + e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
+        this->m_globalSettings.loadFromFile(this->savePath + e_globalSettingsFileName + e_saveFileNameExtension);
         
+        //this->m_globalSettings.saveToFile(this->testingSavePath, e_globalSettingsFileName + e_saveFileNameExtension);
+        
+        //this->loadFromFile(this->savePath + e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
+        this->m_globalStatus.loadFromFile(this->savePath + e_globalStatusFileName + e_saveFileNameExtension);
+        
+        //this->m_globalStatus.saveToFile(this->testingSavePath, e_globalStatusFileName + e_saveFileNameExtension);
+                
+        this->loadDirectory(e_rootFolderFileName, &this->m_rootFolder);
+        
+        /*
         for (Plan* plan:this->m_plans){
             if (plan != nullptr){
                 for (QObject* object:plan->objectives()->getData()){
@@ -961,6 +984,7 @@ namespace LPP
                 }
             }
         }
+        */
         
         this->setTimelineMin(std::max(this->timeOrigin(), this->currentTime().addYears(-t_maxPastYears).toUTC()));
         this->setTimelineMax(this->currentTime().addYears(t_maxFutureYears).toUTC());
@@ -1015,8 +1039,10 @@ namespace LPP
     {
         qDebug() << "saving...";
         
-        this->saveToFile(this->savePath, e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
-        this->saveToFile(this->savePath, e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
+        //this->saveToFile(this->savePath, e_globalSettingsFileName + e_saveFileNameExtension, this->m_globalSettings);
+        this->m_globalSettings.saveToFile(this->savePath, e_globalSettingsFileName + e_saveFileNameExtension);
+        //this->saveToFile(this->savePath, e_globalStatusFileName + e_saveFileNameExtension, this->m_globalStatus);
+        this->m_globalStatus.saveToFile(this->savePath, e_globalStatusFileName + e_saveFileNameExtension);
         
         if (this->m_monthModified.size()){
         
@@ -1332,6 +1358,8 @@ namespace LPP
                         
                         Instance* instance = static_cast<Instance*>(plan->instances()->at(0));
                         
+                        if (this->autoDeleteMask(instance)) modified = true;
+                        
                         if (this->autoDeleteInstance(instance)){
                             objectDeleted(plan);
                             action->plans()->remove(i);
@@ -1348,6 +1376,8 @@ namespace LPP
                     for (int i = 0; i < plan->instances()->size(); i++){
                         Instance* instance = static_cast<Instance*>(plan->instances()->at(i));
                         
+                        if (this->autoDeleteMask(instance)) modified = true;
+                        
                         if (this->autoDeleteInstance(instance)){
                             plan->instances()->remove(i);
                             i--;
@@ -1360,16 +1390,17 @@ namespace LPP
         }
     }
     
-    bool Engine::autoDeleteInstance(Instance* instance)
+    bool Engine::autoDeleteMask(Instance* instance)
     {
-        
         bool maskModified = false;
         
         QVector<QPair<QDateTime, QDateTime>> maskData = instance->getMaskData();
         
+        Int64 instanceLength = instance->startTime().msecsTo(instance->endTime());
+        
         for (int i = 0; i < maskData.size(); ++i){
             auto mask = maskData[i];
-            if (mask.second <= this->pastMax()){
+            if (mask.second.addMSecs(instanceLength).toUTC() <= this->pastMax()){
                 maskData.remove(i);
                 --i;
                 maskModified = true;
@@ -1390,10 +1421,16 @@ namespace LPP
             instance->setMask(outStr);
         }
         
+        return maskModified;
+    }
+    
+    bool Engine::autoDeleteInstance(Instance* instance)
+    {
         if (instance->permanent()) return false;
             
         if (instance->repeatMode() == "none"){
             if (instance->endTime() <= this->pastMax()) {
+                qDebug() << this->pastMax() << instance->endTime();
                 static_cast<Plan*>(instance->plan())->deleteInstance(instance);
                 return true;
             }
@@ -1835,16 +1872,11 @@ namespace LPP
                         Occurrence* occurrence = new Occurrence();
                         QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
                         
-                        if (maskPtr < maskData.size()){
-                            if (firstStartTime < maskData[maskPtr].second){
-                                if (firstStartTime >= maskData[maskPtr].first) occurrence->setCanceled(true);
-                            }
-                            else {
-                                while (true){
-                                    maskPtr++;
-                                    if (maskPtr >= maskData.size() || firstStartTime < maskData[maskPtr].second) break;
-                                }
-                            }
+                        while (maskPtr < maskData.size() && firstStartTime >= maskData[maskPtr].second){
+                            maskPtr++;
+                        }
+                        if (maskPtr < maskData.size() && firstStartTime >= maskData[maskPtr].first){
+                            occurrence->setCanceled(true);
                         }
                         
                         occurrence->setStartTime(firstStartTime);
@@ -1859,7 +1891,7 @@ namespace LPP
                         //next
                         
                         if (jumpMethod == 1){
-                            firstStartTime = firstStartTime.addDays(instance->repeatParam());
+                            firstStartTime = firstStartTime.addDays(instance->repeatParam()).toUTC();
                         }
                         else if (jumpMethod == 2){
                             QDate firstStartDate = firstStartTime.date().addMonths(instance->repeatParam());
@@ -1880,16 +1912,11 @@ namespace LPP
                     Occurrence* occurrence = new Occurrence();
                     QQmlEngine::setObjectOwnership(occurrence, QQmlEngine::CppOwnership);
                     
-                    if (maskPtr < maskData.size()){
-                        if (firstStartTime < maskData[maskPtr].second){
-                            if (firstStartTime >= maskData[maskPtr].first) occurrence->setCanceled(true);
-                        }
-                        else {
-                            while (true){
-                                maskPtr++;
-                                if (maskPtr >= maskData.size() || firstStartTime < maskData[maskPtr].second) break;
-                            }
-                        }
+                    while (maskPtr < maskData.size() && firstStartTime >= maskData[maskPtr].second){
+                        maskPtr++;
+                    }
+                    if (maskPtr < maskData.size() && firstStartTime >= maskData[maskPtr].first){
+                        occurrence->setCanceled(true);
                     }
                     
                     occurrence->setStartTime(firstStartTime);

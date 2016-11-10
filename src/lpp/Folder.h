@@ -14,7 +14,7 @@ namespace LPP
         
         Q_PROPERTY(QString type READ type NOTIFY typeChanged)
         Q_PROPERTY(QString typeName READ typeName NOTIFY typeChanged)
-        Q_PROPERTY(Int id READ id)
+        Q_PROPERTY(Int id READ id NOTIFY idChanged)
         Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
         Q_PROPERTY(QString note READ note WRITE setNote NOTIFY noteChanged)
         Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
@@ -55,8 +55,11 @@ namespace LPP
         QObjectVector* actions();
         QObjectVector* plans();
         
-        virtual void setParam(const QString&, const QString&);
-        virtual QVector<QPair<QString, QString>> getParams();
+        //virtual void setParam(const QString&, const QString&);
+        //virtual QVector<QPair<QString, QString>> getParams();
+        
+        virtual QJsonObject saveToJson();
+        virtual void loadFromJson(const QJsonObject&);
         
         virtual QString getFileName();
         
@@ -69,6 +72,7 @@ namespace LPP
         QObjectVector m_folders, m_actions, m_plans;
     
     signals:
+        void idChanged();
         void nameChanged();
         void noteChanged();
         void colorChanged();

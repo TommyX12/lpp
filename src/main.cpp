@@ -50,6 +50,7 @@ to deploy qt quick:
 
 tr() gives translated string. for use with diff languages. qsTr() in qml. click on the "tr" button in designer.
     example of arguments: text: qsTr("File %1 of %2").arg(counter).arg(total)
+    this function is defined in every QObject.
 use anchors.fill = parent, for most class definition
 use states and transitions for a qml object
 the "enabled" property of any object can be used to make an item unusable

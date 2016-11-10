@@ -9,6 +9,8 @@
 
 #include "Engine.h"
 
+#include <QJsonArray>
+
 
 namespace LPP
 {
@@ -49,7 +51,9 @@ namespace LPP
     {
         Engine::current()->setOccurrencesChanged();
         
-        return this->m_id = id;
+        this->m_id = id;
+        emit this->idChanged();
+        return this->m_id;
     }
     
     void Action::updateFullPath()
@@ -141,6 +145,7 @@ namespace LPP
         return false;
     }
     
+    /*
     void Action::setParam(const QString& name, const QString& value)
     {
         if (name == "name") this->setName(value);
@@ -175,6 +180,41 @@ namespace LPP
         params.append(QPair<QString, QString>("missions", plansStr));
         
         return params;
+    }
+    */
+    
+    QJsonObject Action::saveToJson()
+    {
+        QJsonObject json = QJsonObject();
+        
+        json["name"] = this->name();
+        json["note"] = this->note();
+        
+        QJsonArray missionsArray = QJsonArray(); 
+        
+        for (QObject* object:this->plans()->getData()){
+            Plan* plan = static_cast<Plan*>(object);
+            missionsArray.append(plan->saveToJson());
+        }
+        
+        json["missions"] = missionsArray;
+        
+        return json;
+    }
+    
+    void Action::loadFromJson(const QJsonObject& json)
+    {
+        this->setName(json["name"].toString());
+        this->setNote(json["note"].toString());
+        
+        this->plans()->clear();
+        QJsonArray missionsArray = json["missions"].toArray();
+        
+        for (int i = 0; i < missionsArray.size(); ++i){
+            QJsonObject planJson = missionsArray[i].toObject();
+            Plan* plan = static_cast<Plan*>(this->createPlan());
+            plan->loadFromJson(planJson);
+        }
     }
     
     QString Action::getFileName()

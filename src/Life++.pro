@@ -24,7 +24,8 @@ SOURCES += main.cpp \
     lpp/Occurrence.cpp \
     lpp/Settings.cpp \
     lpp/GlobalSettings.cpp \
-    lpp/GlobalStatus.cpp
+    lpp/GlobalStatus.cpp \
+    lpp/CharacterAttribute.cpp
 
 RESOURCES += qml.qrc
 
@@ -54,7 +55,8 @@ HEADERS += \
     lpp/Occurrence.h \
     lpp/Settings.h \
     lpp/GlobalSettings.h \
-    lpp/GlobalStatus.h
+    lpp/GlobalStatus.h \
+    lpp/CharacterAttribute.h 
 
 DISTFILES += \
     ../bin/qml/modules/lpp_utils/components/utils/Utils.js \

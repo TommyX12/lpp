@@ -125,8 +125,8 @@ namespace LPP
         Q_INVOKABLE QObject* requestSearchList(bool, bool, bool);
         
         QString getFilePath(ISavable&);
-        void saveToFile(const QString&, const QString&, ISavable&);
-        void loadFromFile(const QString&, ISavable&);
+        //void saveToFile(const QString&, const QString&, ISavable&);
+        //void loadFromFile(const QString&, ISavable&);
         void deleteDirectory(const QString&);
         void deleteFile(const QString&);
         void loadDirectory(const QString&, Folder*);
@@ -134,7 +134,7 @@ namespace LPP
         QString encodeParams(const QVector<QPair<QString, QString>>&);
         QVector<QPair<QString, QString>> decodeParams(const QString&);
         
-        QString qmlPath, appPath, savePath;
+        QString qmlPath, appPath, savePath, testingSavePath;
         
         QDateTime timelineMin();
         QDateTime setTimelineMin(const QDateTime&);
@@ -182,6 +182,7 @@ namespace LPP
         void mergeMarkers(const QDateTime&);
         Q_INVOKABLE void refresh();
         void autoDelete();
+        bool autoDeleteMask(Instance*);
         bool autoDeleteInstance(Instance*);
         Q_INVOKABLE bool drawTimelineRange(Action*, const QDateTime&, const QDateTime&, bool = false);
         Q_INVOKABLE void autoPlan(bool = false);

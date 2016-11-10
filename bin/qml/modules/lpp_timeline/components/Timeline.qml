@@ -266,7 +266,7 @@ Item {
         oldBegin = -1;
         
         editWindow.show();
-        editWindow.begin = editWindow.end = "";
+        editWindow.begin = editWindow.end = Engine.timeToString(new Date(cameraTime));
         if (findAction == true) editWindow.findAction();
     }
     /*
@@ -516,7 +516,7 @@ Item {
                         onClicked: {
                             timeline.editingAction = null;
                             if (Engine.globalSettings.autoAutoPlan && editingAuto && editEnd > Engine.currentTime().getTime()){
-                                mainWindow.showWarning(qsTr("Warning"), qsTr("Auto session generation is currently enabled. If a dynamic session is erased, it will be filled back in instantly to complete missions. Delete the mission instead."));
+                                mainWindow.showWarning(qsTr("Warning"), qsTr("Auto session generation is currently enabled. If a dynamic session is erased, it will be filled back in instantly to complete missions. Delete the mission or cancel the occurrence instead."));
                             }
                         }
                     }

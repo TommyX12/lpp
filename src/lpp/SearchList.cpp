@@ -54,29 +54,29 @@ namespace LPP
     
     bool SearchList::compare(SearchInfo* a, SearchInfo* b)
     {
-        return a->maxJ > b->maxJ || (a->maxJ == b->maxJ && (a->maxJPos > b->maxJPos || (a->maxJPos == b->maxJPos && a->object()->fullPath() < b->object()->fullPath())));
+        return a->maxJ > b->maxJ || (a->maxJ == b->maxJ && (a->maxJPos > b->maxJPos));
     }
     
-    void SearchList::refresh(const QString& searchStr, bool caseSensitive)
+    void SearchList::refresh(const QString& searchStr, bool caseSensitive, bool fuzzy)
     {
         QString matchingStr = caseSensitive ? searchStr : searchStr.toLower();
-        QVector<Int> matchingInfo = Utils::generateMatchingInfo(matchingStr);
-        
-        if (caseSensitive){
-            for (SearchInfo* info:this->m_data){
-                QPair<Int, Int> matchingResult = Utils::stringMatching(info->object()->fullPath(), matchingStr, matchingInfo, true);
-                info->maxJ = matchingResult.first;
-                info->maxJPos = matchingResult.second;
-                //qDebug() << matchingResult;
-            }
+        QVector<Int> matchingInfo;
+        if (!fuzzy){
+            matchingInfo = Utils::generateMatchingInfo(matchingStr);
         }
-        else {
-            for (SearchInfo* info:this->m_data){
-                QPair<Int, Int> matchingResult = Utils::stringMatching(info->object()->fullPathLower(), matchingStr, matchingInfo, true);
-                info->maxJ = matchingResult.first;
-                info->maxJPos = matchingResult.second;
-                //qDebug() << matchingResult;
+        
+        for (SearchInfo* info:this->m_data){
+            const QString& baseStr = caseSensitive ? info->object()->fullPath() : info->object()->fullPathLower();
+            QPair<Int, Int> matchingResult;
+            if (fuzzy){
+                matchingResult = Utils::sequenceMatching(baseStr, matchingStr, true);
             }
+            else {
+                matchingResult = Utils::stringMatching(baseStr, matchingStr, matchingInfo, true);
+            }
+            info->maxJ = matchingResult.first;
+            info->maxJPos = matchingResult.second - baseStr.length();
+            //qDebug() << matchingResult;
         }
         
         std::sort(this->m_data.begin(), this->m_data.end(), compare);

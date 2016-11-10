@@ -30,7 +30,7 @@ namespace LPP
         Int size();
         Q_INVOKABLE QObject* at(Int);
         
-        Q_INVOKABLE void refresh(const QString&, bool);
+        Q_INVOKABLE void refresh(const QString&, bool, bool);
         
         static bool compare(SearchInfo*, SearchInfo*);
         

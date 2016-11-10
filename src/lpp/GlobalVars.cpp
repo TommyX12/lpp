@@ -2,8 +2,9 @@
 
 namespace LPP
 {
-    Int e_maxID = 1024;
+    Int e_maxID = 4096;
     QString e_savePath = "/save";
+    QString e_testingSavePath = "/testingSave";
     QString e_rootFolderFileName = "/rootFolder";
     QString e_timelineFileName = "/timeline";
     QString e_folderDataFileName = "/folderData";

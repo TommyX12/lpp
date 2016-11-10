@@ -10,6 +10,8 @@
 
 #include "QPair"
 
+#include <QJsonObject>
+
 namespace LPP
 {
 
@@ -53,8 +55,11 @@ namespace LPP
         
         Q_INVOKABLE bool isForever();
         
-        QString getParams();
-        void setParams(const QString&);
+        //QString getParams();
+        //void setParams(const QString&);
+        
+        virtual QJsonObject saveToJson();
+        virtual void loadFromJson(const QJsonObject&);
         
         bool permanent();
         bool setPermanent(bool);

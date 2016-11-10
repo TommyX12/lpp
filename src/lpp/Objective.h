@@ -8,6 +8,8 @@
 
 #include "Action.h"
 
+#include <QJsonObject>
+
 namespace LPP
 {
     
@@ -29,8 +31,11 @@ namespace LPP
         Int length();
         Int setLength(Int);
         
-        QString getParams();
-        void setParams(const QString&);
+        //QString getParams();
+        //void setParams(const QString&);
+        
+        virtual QJsonObject saveToJson();
+        virtual void loadFromJson(const QJsonObject&);
         
         Int tempActionID;
         
